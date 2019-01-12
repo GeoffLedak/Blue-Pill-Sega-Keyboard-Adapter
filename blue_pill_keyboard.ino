@@ -1,6 +1,8 @@
 #define KEYBOARD_DATA_PIN   PB11
 #define KEYBOARD_CLOCK_PIN  PB10
 
+#define TH_BIT  0b0001000000000000
+
 // Scancode buffer
 
 #define BUFFER_SIZE 128
@@ -20,6 +22,8 @@ void setup() {
     delay(1000);
     Serial.begin(2000000);
 
+    pinMode(PB12, INPUT);
+    
     pinMode(PB11, INPUT_PULLUP);
     pinMode(KEYBOARD_CLOCK_PIN, INPUT_PULLUP);
     
@@ -31,18 +35,21 @@ void setup() {
     
 }
 
-void loop() {
+void loop()
+{
+    // do nothing while we wait for TH to go high again (transaction complete)
+    do{ }
+    while( (GPIOB->regs->IDR & TH_BIT) != TH_BIT );
 
-    uint8_t s = get_scan_code();
+    // wait for TH to go low
+    do{ }
+    while( (GPIOB->regs->IDR & TH_BIT) != 0 );
     
-    if(s != 0) {
-        
-        Serial.println(s, HEX);
-    }
-
-
+    
+    Serial.println("a"); 
 
 }
+
 
 
 void ps2interrupt( void )
