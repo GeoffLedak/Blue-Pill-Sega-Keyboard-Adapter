@@ -22,7 +22,8 @@ void setup() {
     delay(1000);
     Serial.begin(2000000);
 
-    pinMode(PB12, INPUT);
+    // set TH (PB12) to input floating
+    GPIOB->regs->CRH = (GPIOB->regs->CRH & 0xFFF0FFFF) | 0x00040000;
     
     pinMode(PB11, INPUT_PULLUP);
     pinMode(KEYBOARD_CLOCK_PIN, INPUT_PULLUP);
