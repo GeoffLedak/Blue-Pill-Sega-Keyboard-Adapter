@@ -22,8 +22,7 @@ void setup() {
     delay(1000);
     Serial.begin(2000000);
 
-    // set TH (PB12) to input floating
-    GPIOB->regs->CRH = (GPIOB->regs->CRH & 0xFFF0FFFF) | 0x00040000;
+    // Setup AT keyboard communication
     
     pinMode(PB11, INPUT_PULLUP);
     pinMode(KEYBOARD_CLOCK_PIN, INPUT_PULLUP);
@@ -33,6 +32,18 @@ void setup() {
     
     attachInterrupt(KEYBOARD_CLOCK_PIN, ps2interrupt, FALLING);
     
+    
+    // Setup XBAND communication
+    
+    // pinMode(TL, OUTPUT);
+    
+    // set TH (PB12) to input floating
+    GPIOB->regs->CRH = (GPIOB->regs->CRH & 0xFFF0FFFF) | 0x00040000;
+    
+    // pinMode(TR, INPUT);
+    
+    
+    initPins();
     
 }
 
@@ -49,6 +60,18 @@ void loop()
     
     Serial.println("a"); 
 
+}
+
+
+
+void initPins()
+{
+//    delayMicroseconds(8);
+    
+//    DDRB = (DDRB & B110000) + B001111;      // make the data port an output
+//    PORTB = (PORTB & B110000) + 0xC;        // present 1st nybble of ID
+    
+//    PORTD |= TL_BIT;                        // Raise TL (key ACK)
 }
 
 
