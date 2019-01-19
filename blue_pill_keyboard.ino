@@ -1,7 +1,8 @@
 #define KEYBOARD_DATA_PIN   PB11
 #define KEYBOARD_CLOCK_PIN  PB10
 
-#define TH_BIT  0b0001000000000000
+#define TH_BIT  0b0000000100000000      // PA8
+
 
 // Scancode buffer
 
@@ -37,8 +38,14 @@ void setup() {
     
     // pinMode(TL, OUTPUT);
     
-    // set TH (PB12) to input floating
-    GPIOB->regs->CRH = (GPIOB->regs->CRH & 0xFFF0FFFF) | 0x00040000;
+    /*
+    CRH is used to set type/and or speed of pins 8-15 of the port
+    CRL is used to set type/and or speed of pins 0-7 of the port
+    */
+    
+    
+    // set TH (PA8) to input floating
+    GPIOA->regs->CRH = (GPIOA->regs->CRH & 0xFFFFFFF0) | 0x00000004;
     
     // pinMode(TR, INPUT);
     
@@ -51,11 +58,11 @@ void loop()
 {
     // do nothing while we wait for TH to go high again (transaction complete)
     do{ }
-    while( (GPIOB->regs->IDR & TH_BIT) != TH_BIT );
+    while( (GPIOA->regs->IDR & TH_BIT) != TH_BIT );
 
     // wait for TH to go low
     do{ }
-    while( (GPIOB->regs->IDR & TH_BIT) != 0 );
+    while( (GPIOA->regs->IDR & TH_BIT) != 0 );
     
     
     Serial.println("a"); 
