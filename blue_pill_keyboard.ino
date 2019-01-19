@@ -159,6 +159,26 @@ short waitForPin(short pin, short value)
 }
 
 
+void endWait()
+{
+    short numLoops = 2690;
+    
+    while(numLoops != 0)
+    {
+        __asm__("nop\n\t");
+        
+        if( (GPIOA->regs->IDR & TH_BIT) != 0 )      // TH went high, transaction aborted
+            return;
+            
+        numLoops--;
+    }
+    
+    Serial.println("fail 222");
+    return;                             // We timed out
+}
+
+
+
 void Talk_To_Sega()
 {
     // gen TH = select
@@ -221,12 +241,42 @@ void Talk_To_Sega()
     
     if( !waitForPin(TR_BIT, LOW) ) {        // wait for TR (REQ) to go LOW
         initPins();
-        Serial.println("fail 555");
+        // Serial.println("fail 555");
         return;
     }
     
+    // --------------------------------------------------------------------------------
+    // TALK to Sega
+    // --------------------------------------------------------------------------------
     
     
+    // is there stuff in the buffer?
+    
+    uint8_t s = get_scan_code();
+    
+    if(s == 0)                                  // buffer is empty
+    {
+        delayMicroseconds(8);
+        
+        // zero bytes to send                                          0000
+        GPIOB->regs->ODR = (GPIOB->regs->ODR & 0b0000111111111111) | 0b0000000000000000;
+        
+        delayMicroseconds(1);
+        
+        // Lower TL (key ACK) (PA10)
+        GPIOA->regs->ODR = (GPIOA->regs->ODR & 0b1111101111111111) | 0b0000000000000000;
+    
+    
+        endWait();                              // wait for start to go up
+        initPins();                             // We're all done
+        return;
+    }
+    else                                        // buffer has stuff in it
+    {
+        
+        
+        
+    }
     
     
     
