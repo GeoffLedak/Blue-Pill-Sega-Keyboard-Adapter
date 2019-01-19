@@ -1,19 +1,13 @@
 /*
-Data Pins:
-
 bit0    PB12
 bit1    PB13
 bit2    PB14
 bit3    PB15
 
-
 TH      PA8     controlled by sega
 TR      PA9     controlled by sega
-
 TL      PA10    controlled by adapter
 */
-
-
 
 #define KEYBOARD_DATA_PIN   PB11
 #define KEYBOARD_CLOCK_PIN  PB10
@@ -22,9 +16,7 @@ TL      PA10    controlled by adapter
 #define TR_BIT  0b0000001000000000      // PA9
 #define TL_BIT  0b0000010000000000      // PA10
 
-
 // Scancode buffer
-
 #define BUFFER_SIZE 128
 static volatile uint8_t buffer[BUFFER_SIZE];
 static volatile uint8_t head, tail;
@@ -60,13 +52,6 @@ void setup() {
     CRL is used to set type/and or speed of pins 0-7 of the port
     
     Out of these 4 bits, the low 2 bits are MODE, and high 2 bits are CNF.
-    
-    CNF     MODE
-    
-    01      00
-    
-    01      01
-    
     */
     
     // set TH (PA8) to input floating
@@ -78,9 +63,7 @@ void setup() {
     // set TL (PA10) to output open drain
     GPIOA->regs->CRH = (GPIOA->regs->CRH & 0xFFFFF0FF) | 0x00000500;    // CNF = 01 MODE = 01
     
-    
     initPins();
-    
 }
 
 void loop()
@@ -93,34 +76,14 @@ void loop()
     do{ }
     while( (GPIOA->regs->IDR & TH_BIT) != 0 );
     
-    
-    // Serial.println("a");
-    
     Talk_To_Sega();
-
 }
 
 
 
 void initPins()
 {
-//    delayMicroseconds(8);
-    
-//    DDRB = (DDRB & B110000) + B001111;      // make the data port an output
-//    PORTB = (PORTB & B110000) + 0xC;        // present 1st nybble of ID
-    
-//    PORTD |= TL_BIT;                        // Raise TL (key ACK)
-
-
-
     delayMicroseconds(8);
-    
-    /*
-    bit0	PB12
-    bit1	PB13
-    bit2	PB14
-    bit3	PB15
-    */
     
     // make the data port an output, open drain // CNF = 01 MODE = 01
     GPIOB->regs->CRH = (GPIOB->regs->CRH & 0x0000FFFF) | 0x55550000;
@@ -129,8 +92,7 @@ void initPins()
     GPIOB->regs->ODR = (GPIOB->regs->ODR & 0b0000111111111111) | 0b1100000000000000;
     
     // Raise TL (key ACK) (PA10)
-    GPIOA->regs->ODR = (GPIOA->regs->ODR & 0b1111101111111111) | 0b0000010000000000;
-      
+    GPIOA->regs->ODR = (GPIOA->regs->ODR & 0b1111101111111111) | 0b0000010000000000;    
 }
 
 
