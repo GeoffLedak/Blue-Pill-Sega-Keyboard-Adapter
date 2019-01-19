@@ -44,8 +44,8 @@ void setup() {
 
     // Setup AT keyboard communication
     
-    pinMode(PB11, INPUT_PULLUP);
-    pinMode(KEYBOARD_CLOCK_PIN, INPUT_PULLUP);
+    pinMode(KEYBOARD_DATA_PIN, INPUT);
+    pinMode(KEYBOARD_CLOCK_PIN, INPUT);
     
     head = 0;
     tail = 0;
