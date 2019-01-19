@@ -273,16 +273,91 @@ void Talk_To_Sega()
     }
     else                                        // buffer has stuff in it
     {
+        uint16_t length = 0;
+        uint8_t scancodes[15];
+        uint8_t *index = scancodes;
+        
+        *index = 0;                             // put a type byte of 0 to send first
+        index++;
+        length++;
+        
+        while( s != 0)                          // now add the actual scancodes
+        {
+            *index = s;
+            index++;
+            s = get_scan_code();
+            length++;
+            
+            if( length > 14 )
+                break;
+        }
         
         
+        // now send stuff here
         
+        delayMicroseconds(8);
+        
+        // how many bytes we want to send
+        GPIOB->regs->ODR = (GPIOB->regs->ODR & 0b0000111111111111) | ( length << 12 );
+    
+        delayMicroseconds(1);
+        
+        // Lower TL (key ACK) (PA10)
+        GPIOA->regs->ODR = (GPIOA->regs->ODR & 0b1111101111111111) | 0b0000000000000000;
+        
+        
+          
+        index = scancodes; 
+        
+        while( length > 0 )                                 // then send the actual scancodes
+        {
+            
+            if( !waitForPin(TR_BIT, HIGH) ) {               // wait for TR (gen REQ) to go HIGH
+                initPins();
+                Serial.println("fail 666");
+                return;
+            }
+            
+            delayMicroseconds(8);
+            
+            // write high nibble
+            GPIOB->regs->ODR = (GPIOB->regs->ODR & 0b0000111111111111) | ( (*index >> 4) << 12 );
+            
+            delayMicroseconds(1);
+            
+            // Raise TL (key ACK) (PA10)
+            GPIOA->regs->ODR = (GPIOA->regs->ODR & 0b1111101111111111) | 0b0000010000000000;
+        
+        
+            // --------------
+        
+        
+            if( !waitForPin(TR_BIT, LOW) ) {                // wait for TR (gen REQ) to go LOW
+                initPins();
+                Serial.println("fail 777");
+                return;
+            }
+            
+            delayMicroseconds(8);
+            
+            // write low nibble
+            GPIOB->regs->ODR = (GPIOB->regs->ODR & 0b0000111111111111) | ( (*index & 0xF) << 12 );
+            
+            delayMicroseconds(1);
+            
+            // Lower TL (key ACK) (PA10)
+            GPIOA->regs->ODR = (GPIOA->regs->ODR & 0b1111101111111111) | 0b0000000000000000;
+            
+            index++;
+            length--;
+        }
+    
+    
+        endWait();                              // wait for start to go up
+        initPins();                             // We're all done
+        return;   
     }
     
-    
-    
-    
-    initPins();
-    return;
 }
 
 
