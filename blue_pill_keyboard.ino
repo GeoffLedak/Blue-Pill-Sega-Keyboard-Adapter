@@ -1,7 +1,26 @@
+/*
+Data Pins:
+
+bit0    PB12
+bit1    PB13
+bit2    PB14
+bit3    PB15
+
+
+TH      PA8     controlled by sega
+TR      PA9     controlled by sega
+
+TL      PA10    controlled by adapter
+*/
+
+
+
 #define KEYBOARD_DATA_PIN   PB11
 #define KEYBOARD_CLOCK_PIN  PB10
 
 #define TH_BIT  0b0000000100000000      // PA8
+#define TR_BIT  0b0000001000000000      // PA9
+#define TL_BIT  0b0000010000000000      // PA10
 
 
 // Scancode buffer
@@ -36,18 +55,28 @@ void setup() {
     
     // Setup XBAND communication
     
-    // pinMode(TL, OUTPUT);
-    
     /*
     CRH is used to set type/and or speed of pins 8-15 of the port
     CRL is used to set type/and or speed of pins 0-7 of the port
+    
+    Out of these 4 bits, the low 2 bits are MODE, and high 2 bits are CNF.
+    
+    CNF     MODE
+    
+    01      00
+    
+    01      01
+    
     */
     
-    
     // set TH (PA8) to input floating
-    GPIOA->regs->CRH = (GPIOA->regs->CRH & 0xFFFFFFF0) | 0x00000004;
+    GPIOA->regs->CRH = (GPIOA->regs->CRH & 0xFFFFFFF0) | 0x00000004;    // CNF = 01 MODE = 00
     
-    // pinMode(TR, INPUT);
+    // set TR (PA9) to input floating
+    GPIOA->regs->CRH = (GPIOA->regs->CRH & 0xFFFFFF0F) | 0x00000040;    // CNF = 01 MODE = 00
+    
+    // set TL (PA10) to output open drain
+    GPIOA->regs->CRH = (GPIOA->regs->CRH & 0xFFFFF0FF) | 0x00000500;    // CNF = 01 MODE = 01
     
     
     initPins();
@@ -65,7 +94,9 @@ void loop()
     while( (GPIOA->regs->IDR & TH_BIT) != 0 );
     
     
-    Serial.println("a"); 
+    // Serial.println("a");
+    
+    Talk_To_Sega();
 
 }
 
@@ -79,7 +110,131 @@ void initPins()
 //    PORTB = (PORTB & B110000) + 0xC;        // present 1st nybble of ID
     
 //    PORTD |= TL_BIT;                        // Raise TL (key ACK)
+
+
+
+    delayMicroseconds(8);
+    
+    /*
+    bit0	PB12
+    bit1	PB13
+    bit2	PB14
+    bit3	PB15
+    */
+    
+    // make the data port an output, open drain // CNF = 01 MODE = 01
+    GPIOB->regs->CRH = (GPIOB->regs->CRH & 0x0000FFFF) | 0x55550000;
+
+    // present 1st nybble of ID 0xC  0b 1100                       3210
+    GPIOB->regs->ODR = (GPIOB->regs->ODR & 0b0000111111111111) | 0b1100000000000000;
+    
+    // Raise TL (key ACK) (PA10)
+    GPIOA->regs->ODR = (GPIOA->regs->ODR & 0b1111101111111111) | 0b0000010000000000;
+      
 }
+
+
+short waitForPin(short pin, short value)
+{
+    short numLoops = 2690;               // this number of loops will give us a timeout of
+                                         // about 1.19 milliseconds which is what the
+    while(numLoops != 0)                 // original keyboard has
+    {
+        __asm__("nop\n\t");
+        
+        if( (GPIOA->regs->IDR & TH_BIT) != 0 )      // TH went high, transaction aborted
+            return 0;
+            
+        if( value == LOW && (GPIOA->regs->IDR & pin) == value )     // We found the value we want, return 1
+            return 1;
+        
+        if( value == HIGH && (GPIOA->regs->IDR & pin) == pin )      // We found the value we want, return 1
+            return 1;
+          
+        numLoops--;
+    }
+    
+    Serial.println("fail 111");
+    return 0;                           // We timed out, return 0
+}
+
+
+void Talk_To_Sega()
+{
+    // gen TH = select
+    // gen TR = request
+    // key TL = acknowledge
+    
+    // --------------------------------------------------------------------------------
+    // Give Sega the 3 remaining nibbles of our 4 nibble Catapult Keyboard ID - $C369
+    // --------------------------------------------------------------------------------
+    
+    delayMicroseconds(8);
+    
+    // present 2nd nybble of ID 0x3  0b 0011                       3210
+    GPIOB->regs->ODR = (GPIOB->regs->ODR & 0b0000111111111111) | 0b0011000000000000;
+    
+    if( !waitForPin(TR_BIT, LOW) ) {        // wait for TR (REQ) to go LOW
+        initPins();
+        Serial.println("fail 333");
+        return;
+    }
+    
+    
+    
+    delayMicroseconds(8);
+    
+    // present 3rd nybble of ID 0x6  0b 0110                       3210
+    GPIOB->regs->ODR = (GPIOB->regs->ODR & 0b0000111111111111) | 0b0110000000000000;
+    
+    delayMicroseconds(1);
+    
+    // Lower TL (key ACK) (PA10)
+    GPIOA->regs->ODR = (GPIOA->regs->ODR & 0b1111101111111111) | 0b0000000000000000;
+    
+    if( !waitForPin(TR_BIT, HIGH) ) {       // wait for TR (gen REQ) to go HIGH
+        initPins();
+        Serial.println("fail 444");
+        return;
+    }
+    
+    
+    
+    // !!  TURN THE DATA PORT  !!
+    // !! AROUND AND SHIT HERE !!
+    
+    
+    
+    
+    delayMicroseconds(8);
+    
+    
+    
+    
+    // present 4th nybble of ID 0x9  0b 1001                       3210
+    GPIOB->regs->ODR = (GPIOB->regs->ODR & 0b0000111111111111) | 0b1001000000000000;
+    
+    delayMicroseconds(1);
+    
+    // Raise TL (key ACK) (PA10)
+    GPIOA->regs->ODR = (GPIOA->regs->ODR & 0b1111101111111111) | 0b0000010000000000;
+    
+    if( !waitForPin(TR_BIT, LOW) ) {        // wait for TR (REQ) to go LOW
+        initPins();
+        Serial.println("fail 555");
+        return;
+    }
+    
+    
+    
+    
+    
+    
+    
+    initPins();
+    return;
+}
+
 
 
 
