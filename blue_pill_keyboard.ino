@@ -21,6 +21,10 @@ TL      PA10    controlled by adapter
 static volatile uint8_t buffer[BUFFER_SIZE];
 static volatile uint8_t head, tail;
 
+// Control data (to send to keyboard, Reset, Caps LED, etc) buffer
+static volatile uint8_t sendBuffer[BUFFER_SIZE];
+static volatile uint8_t sendHead, sendTail;
+
 char PS2busy = 0;
 char WriteToPS2keyboard = 0;
 
@@ -28,6 +32,9 @@ uint8_t bitcount = 0;
 uint8_t incoming = 0;
 uint8_t outgoing = 0;
 uint32_t prev_ms = 0;
+
+volatile uint8_t _parity = 0;
+
 
 void setup() {
 
@@ -337,7 +344,120 @@ void Talk_To_Sega()
 
 void Listen_To_Sega()
 {
-    initPins();
+    // Raise TL (key ACK) (PA10)
+    GPIOA->regs->ODR = (GPIOA->regs->ODR & 0b1111101111111111) | 0b0000010000000000;
+    
+    if( !waitForPin(TR_BIT, LOW) ) {        // wait for TR (REQ) to go LOW
+        initPins();
+        Serial.println("fail 333");
+        return;
+    }
+    
+    // get the BYTE count (includes TYPE, which we don't care about)
+    short byteCount = (GPIOB->regs->IDR & 0b1111000000000000) >> 12;
+    
+    delayMicroseconds(1);
+    
+    // Lower TL (key ACK) (PA10)
+    GPIOA->regs->ODR = (GPIOA->regs->ODR & 0b1111101111111111) | 0b0000000000000000;
+    
+    
+    
+    
+    
+    
+    if( !waitForPin(TR_BIT, HIGH) ) {       // wait for TR (gen REQ) to go HIGH
+        initPins();
+        Serial.println("fail 444");
+        return;
+    }
+    
+    short type1 = (GPIOB->regs->IDR & 0b1111000000000000) >> 12;
+    
+    delayMicroseconds(1);
+    
+    // Raise TL (key ACK) (PA10)
+    GPIOA->regs->ODR = (GPIOA->regs->ODR & 0b1111101111111111) | 0b0000010000000000;
+    
+    
+    
+    
+    
+    if( !waitForPin(TR_BIT, LOW) ) {        // wait for TR (REQ) to go LOW
+        initPins();
+        Serial.println("fail 333");
+        return;
+    }
+    
+    short type2 = (GPIOB->regs->IDR & 0b1111000000000000) >> 12;
+    
+    delayMicroseconds(1);
+    
+    // Lower TL (key ACK) (PA10)
+    GPIOA->regs->ODR = (GPIOA->regs->ODR & 0b1111101111111111) | 0b0000000000000000;
+    
+    byteCount--;
+    
+    
+    
+    
+    static volatile uint8_t incomingValue = 0;
+    
+    
+    while(byteCount > 0)
+    {
+        
+        if( !waitForPin(TR_BIT, HIGH) ) {       // wait for TR (gen REQ) to go HIGH
+            initPins();
+            Serial.println("fail 444");
+            return;
+        }
+        
+        incomingValue = (GPIOB->regs->IDR & 0b1111000000000000) >> 12;
+        incomingValue <<= 4;
+                    
+        delayMicroseconds(1);
+        
+        // Raise TL (key ACK) (PA10)
+        GPIOA->regs->ODR = (GPIOA->regs->ODR & 0b1111101111111111) | 0b0000010000000000;
+        
+        
+        
+        
+        if( !waitForPin(TR_BIT, LOW) ) {        // wait for TR (REQ) to go LOW
+            initPins();
+            Serial.println("fail 333");
+            return;
+        }
+        
+        incomingValue |= ((GPIOB->regs->IDR & 0b1111000000000000) >> 12);
+        
+        delayMicroseconds(1);
+        
+        // Lower TL (key ACK) (PA10)
+        GPIOA->regs->ODR = (GPIOA->regs->ODR & 0b1111101111111111) | 0b0000000000000000;
+        
+        
+        // add incomingValue to buffer
+        uint8_t i = sendHead + 1;
+
+        if (i >= BUFFER_SIZE) i = 0;
+
+        if (i != sendTail)
+        {
+            sendBuffer[i] = incomingValue;
+            sendHead = i;
+        }
+        
+
+        byteCount--;   
+    }
+    
+    
+    // sendNow();
+    
+    endWait();                              // wait for start to go up
+    initPins();                             // We're all done
     return;
 }
 
