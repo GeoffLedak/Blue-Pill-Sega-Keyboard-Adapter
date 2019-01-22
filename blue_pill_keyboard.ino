@@ -199,11 +199,11 @@ void Talk_To_Sega()
         return;
     }
     
+    // otherwise
+    // make data port an output
     GPIOB->regs->CRH = (GPIOB->regs->CRH & 0x0000FFFF) | 0x55550000;
     
     delayMicroseconds(4);
-    
-    
     
     // present 4th nybble of ID 0x9  0b 1001                       3210
     GPIOB->regs->ODR = (GPIOB->regs->ODR & 0b0000111111111111) | 0b1001000000000000;
