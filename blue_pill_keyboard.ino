@@ -163,7 +163,6 @@ void Talk_To_Sega()
     }
     
     
-    
     delayMicroseconds(8);
     
     // present 3rd nybble of ID 0x6  0b 0110                       3210
@@ -181,15 +180,28 @@ void Talk_To_Sega()
     }
     
     
-    
-    // !!  TURN THE DATA PORT  !!
-    // !! AROUND AND SHIT HERE !!
-    
-    
-    
+    // turn the data port around (make it an input), is this a write?
+    // make the data port an input, floating // CNF = 01 MODE = 00
+    GPIOB->regs->CRH = (GPIOB->regs->CRH & 0x0000FFFF) | 0x44440000;
     
     delayMicroseconds(8);
     
+    unsigned short value = GPIOB->regs->IDR & 0b1111000000000000;
+    
+    // Serial.println(value, BIN);
+    
+    // does the Sega want to send us data?
+    if(value == 0)
+    {
+        Serial.println("L");
+        
+        Listen_To_Sega();
+        return;
+    }
+    
+    GPIOB->regs->CRH = (GPIOB->regs->CRH & 0x0000FFFF) | 0x55550000;
+    
+    delayMicroseconds(4);
     
     
     
@@ -322,6 +334,12 @@ void Talk_To_Sega()
     
 }
 
+
+void Listen_To_Sega()
+{
+    initPins();
+    return;
+}
 
 
 
