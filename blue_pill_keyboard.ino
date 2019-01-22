@@ -12,6 +12,8 @@ TL      PA10    controlled by adapter
 #define KEYBOARD_DATA_PIN   PB11
 #define KEYBOARD_CLOCK_PIN  PB10
 
+#define KEYBOARD_CLOCK_PIN_BIT  0b0000010000000000
+
 #define TH_BIT  0b0000000100000000      // PA8
 #define TR_BIT  0b0000001000000000      // PA9
 #define TL_BIT  0b0000010000000000      // PA10
@@ -43,8 +45,8 @@ void setup() {
 
     // Setup AT keyboard communication
     
-    pinMode(KEYBOARD_DATA_PIN, INPUT);
-    pinMode(KEYBOARD_CLOCK_PIN, INPUT);
+    pinMode(KEYBOARD_DATA_PIN, INPUT_PULLUP);
+    pinMode(KEYBOARD_CLOCK_PIN, INPUT_PULLUP);
     
     head = 0;
     tail = 0;
@@ -454,7 +456,7 @@ void Listen_To_Sega()
     }
     
     
-    // sendNow();
+    sendNow();
     
     endWait();                              // wait for start to go up
     initPins();                             // We're all done
@@ -463,12 +465,59 @@ void Listen_To_Sega()
 
 
 
+
+void sendNow()
+{
+    outgoing = get_byte_to_send_to_keyboard();
+    
+    
+    // Spin here until PS2busy == 0;
+    // and keyboard clock pin is high
+    // ADD A TIMEOUT FOR THIS
+    do { }
+    while(PS2busy != 0 && (GPIOB->regs->IDR & KEYBOARD_CLOCK_PIN_BIT) != KEYBOARD_CLOCK_PIN_BIT );
+    
+   
+    
+    PS2busy = 1;
+    WriteToPS2keyboard = 1;
+    
+    
+    _parity = 0;
+    bitcount = 0;
+    
+    
+    // set pins to outputs and high
+    digitalWrite( KEYBOARD_DATA_PIN, HIGH );
+    pinMode( KEYBOARD_DATA_PIN, OUTPUT );
+    
+    digitalWrite( KEYBOARD_CLOCK_PIN, HIGH );
+    pinMode( KEYBOARD_CLOCK_PIN, OUTPUT );
+    
+    delayMicroseconds( 10 );
+    
+
+    
+    // set Clock LOW
+    digitalWrite( KEYBOARD_CLOCK_PIN, LOW );
+    // set clock low for 60us
+    delayMicroseconds( 60 );
+    
+    // Set data low - Start bit
+    digitalWrite( KEYBOARD_DATA_PIN, LOW );
+    
+    // set clock to input_pullup
+    pinMode(KEYBOARD_CLOCK_PIN, INPUT_PULLUP);
+}
+
+
+
 void ps2interrupt( void )
 {
-//    if( WriteToPS2keyboard )
-//        send_bit();
-//    else
-//    {
+    if( WriteToPS2keyboard )
+        send_bit();
+    else
+    {
       uint32_t now_ms;
       uint8_t val, i;
 
@@ -532,8 +581,64 @@ void ps2interrupt( void )
                 bitcount = 0;
                 PS2busy = 0;
         }
- //     }
+    }
 }
+
+
+void send_bit()
+{
+    uint8_t val;
+
+    bitcount++;               // Now point to next bit
+    
+    switch( bitcount )
+    {
+      case 1: // Start bit due to Arduino bug
+              digitalWrite( KEYBOARD_DATA_PIN, ( LOW ) );
+              break;
+      case 2:
+      case 3:
+      case 4:
+      case 5:
+      case 6:
+      case 7:
+      case 8:
+      case 9:
+              // Data bits
+              val = outgoing & 0x01;   // get LSB
+              digitalWrite( KEYBOARD_DATA_PIN, val ); // send start bit
+              _parity += val;            // another one received ?
+              outgoing >>= 1;          // right _SHIFT one place for next bit
+              break;
+      case 10:
+              // Parity - Send LSB if 1 = odd number of 1's so parity should be 0
+              digitalWrite( KEYBOARD_DATA_PIN, ( ~_parity & 1 ) );
+              break;
+      case 11: // Stop bit write change to input pull up for high stop bit
+              pinMode(KEYBOARD_DATA_PIN, INPUT_PULLUP);
+              
+              
+              break;
+      case 12: // Acknowledge bit low we cannot do anything if high instead of low
+                
+               bitcount = 0;
+               PS2busy = 0;
+               outgoing = 0;
+               WriteToPS2keyboard = 0;
+                
+              if(sendHead != sendTail)
+                  sendNow();
+      
+         
+     
+              
+              
+      default: // in case of weird error and end of byte reception re-sync
+              bitcount = 0;
+    }
+    
+}
+
 
 
 static inline uint8_t get_scan_code(void)
@@ -546,5 +651,19 @@ static inline uint8_t get_scan_code(void)
     if (i >= BUFFER_SIZE) i = 0;
     c = buffer[i];
     tail = i;
+    return c;
+}
+
+
+static inline uint8_t get_byte_to_send_to_keyboard(void)
+{
+    uint8_t c, i;
+
+    i = sendTail;
+    if (i == sendHead) return 0;
+    i++;
+    if (i >= BUFFER_SIZE) i = 0;
+    c = sendBuffer[i];
+    sendTail = i;
     return c;
 }
