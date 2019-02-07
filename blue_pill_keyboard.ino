@@ -134,7 +134,8 @@ short waitForPin(short pin, short value)
 
 void endWait()
 {
-    short numLoops = 2690;
+    // short numLoops = 5380;
+    short numLoops = 5660;
     
     while(numLoops != 0)
     {
