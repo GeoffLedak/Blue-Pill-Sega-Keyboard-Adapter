@@ -240,7 +240,7 @@ void Talk_To_Sega()
     
     if(s == 0)                                  // buffer is empty
     {
-        delayMicroseconds(8);
+        delayMicroseconds(7);
         
         // zero bytes to send                                          0000
         GPIOB->regs->ODR = (GPIOB->regs->ODR & 0b0000111111111111) | 0b0000000000000000;
