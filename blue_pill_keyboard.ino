@@ -92,13 +92,15 @@ void loop()
 
 void initPins()
 {
-    delayMicroseconds(11);  // note to myself -- most recent time adjusted value
+    delayMicroseconds(5);
     
     // make the data port an output, open drain // CNF = 01 MODE = 01
     GPIOB->regs->CRH = (GPIOB->regs->CRH & 0x0000FFFF) | 0x55550000;
 
     // present 1st nybble of ID 0xC  0b 1100                       3210
     GPIOB->regs->ODR = (GPIOB->regs->ODR & 0b0000111111111111) | 0b1100000000000000;
+    
+    delayMicroseconds(1);
     
     // Raise TL (key ACK) (PA10)
     GPIOA->regs->ODR = (GPIOA->regs->ODR & 0b1111101111111111) | 0b0000010000000000;    
@@ -224,6 +226,7 @@ void Talk_To_Sega()
     GPIOA->regs->ODR = (GPIOA->regs->ODR & 0b1111101111111111) | 0b0000010000000000;
     
     if( !waitForPin(TR_BIT, LOW) ) {        // wait for TR (REQ) to go LOW
+        delayMicroseconds(4);               // if TH went high here, this is a find
         initPins();
         // Serial.println("fail 555");
         return;
