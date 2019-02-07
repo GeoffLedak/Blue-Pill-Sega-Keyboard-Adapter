@@ -109,9 +109,9 @@ void initPins()
 
 short waitForPin(short pin, short value)
 {
-    short numLoops = 5670;               // this number of loops will give us a timeout of
-                                         // about 1.19 milliseconds which is what the
-    while(numLoops != 0)                 // original keyboard has
+    short numLoops = 5670;
+
+    while(numLoops != 0)
     {
         __asm__("nop\n\t");
         
@@ -134,9 +134,9 @@ short waitForPin(short pin, short value)
 
 void endWait()
 {
-    short numLoops = 5670;
-    
-    while(numLoops != 0)
+    short numLoops = 5670;               // this number of loops will give us a timeout of
+                                         // about 1.19 milliseconds which is what the
+    while(numLoops != 0)                 // original keyboard has
     {
         __asm__("nop\n\t");
         
