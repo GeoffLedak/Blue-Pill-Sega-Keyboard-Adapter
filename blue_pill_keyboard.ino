@@ -92,7 +92,7 @@ void loop()
 
 void initPins()
 {
-    delayMicroseconds(8);
+    delayMicroseconds(11);  // note to myself -- most recent time adjusted value
     
     // make the data port an output, open drain // CNF = 01 MODE = 01
     GPIOB->regs->CRH = (GPIOB->regs->CRH & 0x0000FFFF) | 0x55550000;
@@ -172,7 +172,7 @@ void Talk_To_Sega()
     }
     
     
-    delayMicroseconds(7);       // note to myself -- most recent time adjusted value
+    delayMicroseconds(7);
     
     // present 3rd nybble of ID 0x6  0b 0110                       3210
     GPIOB->regs->ODR = (GPIOB->regs->ODR & 0b0000111111111111) | 0b0110000000000000;
@@ -188,12 +188,13 @@ void Talk_To_Sega()
         return;
     }
     
+    delayMicroseconds(5);
     
     // turn the data port around (make it an input), is this a write?
     // make the data port an input, floating // CNF = 01 MODE = 00
     GPIOB->regs->CRH = (GPIOB->regs->CRH & 0x0000FFFF) | 0x44440000;
     
-    delayMicroseconds(8);
+    delayMicroseconds(7);
     
     unsigned short value = GPIOB->regs->IDR & 0b1111000000000000;
     
@@ -212,12 +213,12 @@ void Talk_To_Sega()
     // make data port an output
     GPIOB->regs->CRH = (GPIOB->regs->CRH & 0x0000FFFF) | 0x55550000;
     
-    delayMicroseconds(4);
+    delayMicroseconds(1);
     
     // present 4th nybble of ID 0x9  0b 1001                       3210
     GPIOB->regs->ODR = (GPIOB->regs->ODR & 0b0000111111111111) | 0b1001000000000000;
     
-    delayMicroseconds(1);
+    delayMicroseconds(2);
     
     // Raise TL (key ACK) (PA10)
     GPIOA->regs->ODR = (GPIOA->regs->ODR & 0b1111101111111111) | 0b0000010000000000;
