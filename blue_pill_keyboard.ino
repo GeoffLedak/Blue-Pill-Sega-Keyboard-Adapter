@@ -40,8 +40,8 @@ volatile uint8_t _parity = 0;
 
 void setup() {
 
-    delay(1000);
-    Serial.begin(2000000);
+    // delay(1000);
+    // Serial.begin(2000000);
 
     // Setup AT keyboard communication
     
@@ -125,7 +125,7 @@ short waitForPin(short pin, short value)
         numLoops--;
     }
     
-    Serial.println("fail 111");
+    // Serial.println("fail 111");
     return 0;                           // We timed out, return 0
 }
 
@@ -144,7 +144,7 @@ void endWait()
         numLoops--;
     }
     
-    Serial.println("fail 222");
+    // Serial.println("fail 222");
     return;                             // We timed out
 }
 
@@ -160,19 +160,19 @@ void Talk_To_Sega()
     // Give Sega the 3 remaining nibbles of our 4 nibble Catapult Keyboard ID - $C369
     // --------------------------------------------------------------------------------
     
-    delayMicroseconds(8);
+    delayMicroseconds(9);
     
     // present 2nd nybble of ID 0x3  0b 0011                       3210
     GPIOB->regs->ODR = (GPIOB->regs->ODR & 0b0000111111111111) | 0b0011000000000000;
     
     if( !waitForPin(TR_BIT, LOW) ) {        // wait for TR (REQ) to go LOW
         initPins();
-        Serial.println("fail 333");
+        // Serial.println("fail 333");
         return;
     }
     
     
-    delayMicroseconds(8);
+    delayMicroseconds(7);       // note to myself -- most recent time adjusted value
     
     // present 3rd nybble of ID 0x6  0b 0110                       3210
     GPIOB->regs->ODR = (GPIOB->regs->ODR & 0b0000111111111111) | 0b0110000000000000;
@@ -184,7 +184,7 @@ void Talk_To_Sega()
     
     if( !waitForPin(TR_BIT, HIGH) ) {       // wait for TR (gen REQ) to go HIGH
         initPins();
-        Serial.println("fail 444");
+        // Serial.println("fail 444");
         return;
     }
     
@@ -202,7 +202,7 @@ void Talk_To_Sega()
     // does the Sega want to send us data?
     if(value == 0)
     {
-        Serial.println("L");
+        // Serial.println("L");
         
         Listen_To_Sega();
         return;
@@ -297,7 +297,7 @@ void Talk_To_Sega()
             
             if( !waitForPin(TR_BIT, HIGH) ) {               // wait for TR (gen REQ) to go HIGH
                 initPins();
-                Serial.println("fail 666");
+                // Serial.println("fail 666");
                 return;
             }
             
@@ -317,7 +317,7 @@ void Talk_To_Sega()
         
             if( !waitForPin(TR_BIT, LOW) ) {                // wait for TR (gen REQ) to go LOW
                 initPins();
-                Serial.println("fail 777");
+                // Serial.println("fail 777");
                 return;
             }
             
@@ -351,7 +351,7 @@ void Listen_To_Sega()
     
     if( !waitForPin(TR_BIT, LOW) ) {        // wait for TR (REQ) to go LOW
         initPins();
-        Serial.println("fail 333");
+        // Serial.println("fail 333");
         return;
     }
     
@@ -370,7 +370,7 @@ void Listen_To_Sega()
     
     if( !waitForPin(TR_BIT, HIGH) ) {       // wait for TR (gen REQ) to go HIGH
         initPins();
-        Serial.println("fail 444");
+        // Serial.println("fail 444");
         return;
     }
     
@@ -387,7 +387,7 @@ void Listen_To_Sega()
     
     if( !waitForPin(TR_BIT, LOW) ) {        // wait for TR (REQ) to go LOW
         initPins();
-        Serial.println("fail 333");
+        // Serial.println("fail 333");
         return;
     }
     
@@ -411,7 +411,7 @@ void Listen_To_Sega()
         
         if( !waitForPin(TR_BIT, HIGH) ) {       // wait for TR (gen REQ) to go HIGH
             initPins();
-            Serial.println("fail 444");
+            // Serial.println("fail 444");
             return;
         }
         
@@ -428,7 +428,7 @@ void Listen_To_Sega()
         
         if( !waitForPin(TR_BIT, LOW) ) {        // wait for TR (REQ) to go LOW
             initPins();
-            Serial.println("fail 333");
+            // Serial.println("fail 333");
             return;
         }
         
