@@ -282,7 +282,7 @@ void Talk_To_Sega()
         
         // now send stuff here
         
-        delayMicroseconds(8);
+        delayMicroseconds(4);
         
         // how many bytes we want to send
         GPIOB->regs->ODR = (GPIOB->regs->ODR & 0b0000111111111111) | ( length << 12 );
@@ -305,12 +305,12 @@ void Talk_To_Sega()
                 return;
             }
             
-            delayMicroseconds(8);
+            delayMicroseconds(3);
             
             // write high nibble
             GPIOB->regs->ODR = (GPIOB->regs->ODR & 0b0000111111111111) | ( (*index >> 4) << 12 );
             
-            delayMicroseconds(1);
+            delayMicroseconds(6);
             
             // Raise TL (key ACK) (PA10)
             GPIOA->regs->ODR = (GPIOA->regs->ODR & 0b1111101111111111) | 0b0000010000000000;
@@ -325,12 +325,12 @@ void Talk_To_Sega()
                 return;
             }
             
-            delayMicroseconds(8);
+            delayMicroseconds(4);
             
             // write low nibble
             GPIOB->regs->ODR = (GPIOB->regs->ODR & 0b0000111111111111) | ( (*index & 0xF) << 12 );
             
-            delayMicroseconds(1);
+            delayMicroseconds(5);
             
             // Lower TL (key ACK) (PA10)
             GPIOA->regs->ODR = (GPIOA->regs->ODR & 0b1111101111111111) | 0b0000000000000000;
