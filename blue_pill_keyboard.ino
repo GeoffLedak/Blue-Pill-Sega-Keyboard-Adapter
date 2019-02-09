@@ -344,10 +344,12 @@ void Listen_To_Sega()
         return;
     }
     
+    delayMicroseconds(2);
+    
     // get the BYTE count (includes TYPE, which we don't care about)
     short byteCount = (GPIOB->regs->IDR & 0b1111000000000000) >> 12;
     
-    delayMicroseconds(1);
+    delayMicroseconds(3);
     
     // Lower TL (key ACK) (PA10)
     GPIOA->regs->ODR = (GPIOA->regs->ODR & 0b1111101111111111) | 0b0000000000000000;
