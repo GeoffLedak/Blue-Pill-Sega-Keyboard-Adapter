@@ -364,9 +364,11 @@ void Listen_To_Sega()
         return;
     }
     
+    delayMicroseconds(2);
+    
     short type1 = (GPIOB->regs->IDR & 0b1111000000000000) >> 12;
     
-    delayMicroseconds(1);
+    delayMicroseconds(6);
     
     // Raise TL (key ACK) (PA10)
     GPIOA->regs->ODR = (GPIOA->regs->ODR & 0b1111101111111111) | 0b0000010000000000;
@@ -380,9 +382,11 @@ void Listen_To_Sega()
         return;
     }
     
+    delayMicroseconds(2);
+    
     short type2 = (GPIOB->regs->IDR & 0b1111000000000000) >> 12;
     
-    delayMicroseconds(1);
+    delayMicroseconds(2);
     
     // Lower TL (key ACK) (PA10)
     GPIOA->regs->ODR = (GPIOA->regs->ODR & 0b1111101111111111) | 0b0000000000000000;
@@ -403,10 +407,12 @@ void Listen_To_Sega()
             return;
         }
         
+        delayMicroseconds(2);
+        
         incomingValue = (GPIOB->regs->IDR & 0b1111000000000000) >> 12;
         incomingValue <<= 4;
                     
-        delayMicroseconds(1);
+        delayMicroseconds(7);
         
         // Raise TL (key ACK) (PA10)
         GPIOA->regs->ODR = (GPIOA->regs->ODR & 0b1111101111111111) | 0b0000010000000000;
@@ -419,9 +425,11 @@ void Listen_To_Sega()
             return;
         }
         
+        delayMicroseconds(2);
+        
         incomingValue |= ((GPIOB->regs->IDR & 0b1111000000000000) >> 12);
         
-        delayMicroseconds(1);
+        delayMicroseconds(4);
         
         // Lower TL (key ACK) (PA10)
         GPIOA->regs->ODR = (GPIOA->regs->ODR & 0b1111101111111111) | 0b0000000000000000;
