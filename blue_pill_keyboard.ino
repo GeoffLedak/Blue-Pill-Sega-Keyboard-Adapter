@@ -512,8 +512,9 @@ void sendNow()
     delayMicroseconds( 60 );
     
     
-    // Set data low - Start bit
-    digitalWrite( KEYBOARD_DATA_PIN, LOW );
+    // set KEYBOARD_DATA_PIN (PB11) low
+    GPIOB->regs->ODR = (GPIOB->regs->ODR & 0b1111011111111111) | 0b0000000000000000;
+    
     
     // set clock to input_pullup
     pinMode(KEYBOARD_CLOCK_PIN, INPUT_PULLUP);
