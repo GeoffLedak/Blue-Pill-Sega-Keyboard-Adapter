@@ -515,9 +515,9 @@ void sendNow()
     // set KEYBOARD_DATA_PIN (PB11) low
     GPIOB->regs->ODR = (GPIOB->regs->ODR & 0b1111011111111111) | 0b0000000000000000;
     
-    
-    // set clock to input_pullup
-    pinMode(KEYBOARD_CLOCK_PIN, INPUT_PULLUP);
+
+    // set KEYBOARD_CLOCK_PIN (PB10) to input floating
+    GPIOB->regs->CRH = (GPIOB->regs->CRH & 0xFFFFF0FF) | 0x00000400;    // CNF = 01 MODE = 00  
 }
 
 
@@ -624,8 +624,10 @@ void send_bit()
               // Parity - Send LSB if 1 = odd number of 1's so parity should be 0
               digitalWrite( KEYBOARD_DATA_PIN, ( ~_parity & 1 ) );
               break;
-      case 11: // Stop bit write change to input pull up for high stop bit
-              pinMode(KEYBOARD_DATA_PIN, INPUT_PULLUP);
+      case 11: // Stop bit write change to input for high stop bit
+              // set KEYBOARD_DATA_PIN (PB11) to input floating
+              GPIOB->regs->CRH = (GPIOB->regs->CRH & 0xFFFF0FFF) | 0x00004000;    // CNF = 01 MODE = 00
+    
               
               
               break;
