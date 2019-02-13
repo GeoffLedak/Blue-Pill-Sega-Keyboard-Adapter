@@ -493,14 +493,14 @@ void sendNow()
     // set KEYBOARD_DATA_PIN (PB11) output open drain
     GPIOB->regs->CRH = (GPIOB->regs->CRH & 0xFFFF0FFF) | 0x00005000;    // CNF = 01 MODE = 01
     
+
+    // set KEYBOARD_DATA_PIN (PB10) high
+    GPIOB->regs->ODR = (GPIOB->regs->ODR & 0b1111101111111111) | 0b0000010000000000;
+    
+    // set KEYBOARD_DATA_PIN (PB10) output open drain
+    GPIOB->regs->CRH = (GPIOB->regs->CRH & 0xFFFFF0FF) | 0x00000500;    // CNF = 01 MODE = 01
     
     
-    // pinMode( KEYBOARD_DATA_PIN, OUTPUT );
-    
-    
-    
-    digitalWrite( KEYBOARD_CLOCK_PIN, HIGH );
-    pinMode( KEYBOARD_CLOCK_PIN, OUTPUT );
     
     delayMicroseconds( 10 );
     
