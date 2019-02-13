@@ -42,8 +42,11 @@ void setup()
 {
     // Setup AT keyboard communication
     
-    pinMode(KEYBOARD_DATA_PIN, INPUT_PULLUP);
-    pinMode(KEYBOARD_CLOCK_PIN, INPUT_PULLUP);
+    // set KEYBOARD_DATA_PIN (PB11) to input floating
+    GPIOB->regs->CRH = (GPIOB->regs->CRH & 0xFFFF0FFF) | 0x00004000;    // CNF = 01 MODE = 00
+    
+    // set KEYBOARD_CLOCK_PIN (PB10) to input floating
+    GPIOB->regs->CRH = (GPIOB->regs->CRH & 0xFFFFF0FF) | 0x00000400;    // CNF = 01 MODE = 00
     
     head = 0;
     tail = 0;
@@ -483,8 +486,18 @@ void sendNow()
     
     
     // set pins to outputs and high
-    digitalWrite( KEYBOARD_DATA_PIN, HIGH );
-    pinMode( KEYBOARD_DATA_PIN, OUTPUT );
+    
+    // set KEYBOARD_DATA_PIN (PB11) high
+    GPIOB->regs->ODR = (GPIOB->regs->ODR & 0b1111011111111111) | 0b0000100000000000;
+    
+    // set KEYBOARD_DATA_PIN (PB11) output open drain
+    GPIOB->regs->CRH = (GPIOB->regs->CRH & 0xFFFF0FFF) | 0x00005000;    // CNF = 01 MODE = 01
+    
+    
+    
+    // pinMode( KEYBOARD_DATA_PIN, OUTPUT );
+    
+    
     
     digitalWrite( KEYBOARD_CLOCK_PIN, HIGH );
     pinMode( KEYBOARD_CLOCK_PIN, OUTPUT );
