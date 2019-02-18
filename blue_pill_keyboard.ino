@@ -616,13 +616,17 @@ void send_bit()
       case 9:
               // Data bits
               val = outgoing & 0x01;   // get LSB
-              digitalWrite( KEYBOARD_DATA_PIN, val ); // send start bit
+              
+              // send start bit. KEYBOARD_DATA_PIN = PB11
+              GPIOB->regs->ODR = (GPIOB->regs->ODR & 0b1111011111111111) | (val << 11);
+              
               _parity += val;            // another one received ?
               outgoing >>= 1;          // right _SHIFT one place for next bit
               break;
       case 10:
               // Parity - Send LSB if 1 = odd number of 1's so parity should be 0
-              digitalWrite( KEYBOARD_DATA_PIN, ( ~_parity & 1 ) );
+              GPIOB->regs->ODR = (GPIOB->regs->ODR & 0b1111011111111111) | (( ~_parity & 1 ) << 11);         
+              
               break;
       case 11: // Stop bit write change to input for high stop bit
               // set KEYBOARD_DATA_PIN (PB11) to input floating
