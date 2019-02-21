@@ -563,16 +563,6 @@ void ps2interrupt( void )
                 break;
         case 11: // Stop bit lots of spare time now
         
-        
-                if(incoming == 0xFA || incoming == 0xAA || incoming == 0xFC || incoming == 0xFD || incoming == 0xFE)
-                {
-                    bitcount = 0;
-                    incoming = 0;
-                    PS2busy = 0;
-                   break; 
-                }
-                    
-        
                 i = head + 1;
 
                 if (i >= BUFFER_SIZE) i = 0;
