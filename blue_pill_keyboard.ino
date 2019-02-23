@@ -524,6 +524,10 @@ void sendNow()
 
 void ps2interrupt( void )
 {
+    if( ( GPIOB->regs->IDR & 0b0000010000000000 ) != 0 )
+        return;
+    
+    
     if( WriteToPS2keyboard )
         send_bit();
     else
