@@ -456,7 +456,8 @@ void Listen_To_Sega()
     }
     
     
-    sendNow();
+    if(incomingValue != 0xED)
+        sendNow();
     
     endWait();                              // wait for start to go up
     initPins();                             // We're all done
@@ -469,7 +470,6 @@ void Listen_To_Sega()
 void sendNow()
 {
     outgoing = get_byte_to_send_to_keyboard();
-    
     
     // Spin here until PS2busy == 0;
     // and keyboard clock pin is high
@@ -644,8 +644,8 @@ void send_bit()
                outgoing = 0;
                WriteToPS2keyboard = 0;
                 
-              if(sendHead != sendTail)
-                  sendNow();
+           //    if(sendHead != sendTail)
+           //        sendNow();
       
          
      
