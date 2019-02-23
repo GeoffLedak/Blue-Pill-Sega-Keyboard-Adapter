@@ -30,6 +30,8 @@ static volatile uint8_t sendHead, sendTail;
 char PS2busy = 0;
 char WriteToPS2keyboard = 0;
 
+char waitForAck = 0;
+
 uint8_t bitcount = 0;
 uint8_t incoming = 0;
 uint8_t outgoing = 0;
@@ -458,6 +460,8 @@ void Listen_To_Sega()
     
     if(incomingValue != 0xED)
         sendNow();
+    else
+        waitForAck = 1;
     
     endWait();                              // wait for start to go up
     initPins();                             // We're all done
@@ -571,6 +575,21 @@ void ps2interrupt( void )
         case 10: // Parity check
                 break;
         case 11: // Stop bit lots of spare time now
+        
+        /*
+                if( incoming == 0xFA && waitForAck)
+                {
+                    waitForAck = 0;
+                    
+                    bitcount = 0;
+                    incoming = 0;
+                
+                    PS2busy = 0;
+                    
+                    sendNow();
+                }
+        */        
+        
         
                 i = head + 1;
 
