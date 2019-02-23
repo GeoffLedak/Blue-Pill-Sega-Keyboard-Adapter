@@ -531,7 +531,10 @@ void ps2interrupt( void )
       uint32_t now_ms;
       uint8_t val, i;
 
-      val = digitalRead( KEYBOARD_DATA_PIN );
+
+      // Read value of KEYBOARD_DATA_PIN
+      val = ( GPIOB->regs->IDR & 0b0000100000000000 ) >> 11;
+      
       now_ms = millis();
       
       if( now_ms - prev_ms > 250 )
@@ -593,8 +596,11 @@ void send_bit()
     
     switch( bitcount )
     {
-      case 1: // Start bit due to Arduino bug
-              digitalWrite( KEYBOARD_DATA_PIN, ( LOW ) );
+      case 1:
+              // set KEYBOARD_DATA_PIN low (it should be low already)
+              GPIOB->regs->ODR = (GPIOB->regs->ODR & 0b1111011111111111);
+              
+              
               break;
       case 2:
       case 3:
@@ -607,7 +613,7 @@ void send_bit()
               // Data bits
               val = outgoing & 0x01;   // get LSB
               
-              // send start bit. KEYBOARD_DATA_PIN = PB11
+              // send bit. KEYBOARD_DATA_PIN = PB11
               GPIOB->regs->ODR = (GPIOB->regs->ODR & 0b1111011111111111) | (val << 11);
               
               _parity += val;            // another one received ?
