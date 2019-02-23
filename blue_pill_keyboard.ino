@@ -50,6 +50,8 @@ void setup()
     
     head = 0;
     tail = 0;
+    sendHead = 0;
+    sendTail = 0;
     
     attachInterrupt(KEYBOARD_CLOCK_PIN, ps2interrupt, FALLING);
     
