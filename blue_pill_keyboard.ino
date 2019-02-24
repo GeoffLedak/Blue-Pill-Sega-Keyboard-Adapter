@@ -42,6 +42,11 @@ volatile uint8_t _parity = 0;
 
 void setup()
 {
+    Serial.begin(9600);
+    
+    delay(1000);
+    
+    
     // Setup AT keyboard communication
     
     // set KEYBOARD_DATA_PIN (PB11) to input floating
@@ -458,10 +463,9 @@ void Listen_To_Sega()
     }
     
     
-    if(incomingValue != 0xED)
-        sendNow();
-    else
-        waitForAck = 1;
+    waitForAck = 1;
+    sendNow();
+        
     
     endWait();                              // wait for start to go up
     initPins();                             // We're all done
@@ -576,19 +580,14 @@ void ps2interrupt( void )
                 break;
         case 11: // Stop bit lots of spare time now
         
-        /*
+        
+
                 if( incoming == 0xFA && waitForAck)
                 {
                     waitForAck = 0;
-                    
-                    bitcount = 0;
-                    incoming = 0;
-                
-                    PS2busy = 0;
-                    
-                    sendNow();
+                    Serial.println("F");
                 }
-        */        
+
         
         
                 i = head + 1;
