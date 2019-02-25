@@ -28,7 +28,26 @@ static volatile uint8_t sendBuffer[BUFFER_SIZE];
 static volatile uint8_t sendHead, sendTail;
 
 char resendByteToKeyboard = 0;
+
+
+
+
 uint8_t lastByteSentToKeyboard = 0;
+
+char neededAcks = 0;
+
+char waitingForAck = 0;
+
+char isMultiByteCommand = 0;
+
+char firstMultiByte = 0;
+char secondMultiByte = 0;
+
+char firstByteSent = 0;
+char secondByteSent = 0;
+
+
+
 
 char PS2busy = 0;
 char WriteToPS2keyboard = 0;
@@ -84,14 +103,21 @@ void setup()
 
 void loop()
 {
-    if( resendByteToKeyboard )
+    
+    // we need to verify that ACK or resend has been received
+    // before we dive into this code, or else it will start
+    // trying to send another byte before we receive ACK / resend
+    
+    if( resendByteToKeyboard && neededAcks > 0 )
     {
-        Serial.println("G");
-        
-        resendByteToKeyboard = 0;
-        sendNow(1);
-        
+        if( !waitingForAck )
+            sendNow();
     }
+    else
+    {
+        resendByteToKeyboard = 0;
+    }
+    
     
     // do nothing while we wait for TH to go high again (transaction complete)
     do{ }
@@ -470,7 +496,18 @@ void Listen_To_Sega()
     }
     
     
-    sendNow(0);
+    if( incomingValue == 0xED )
+    {
+        isMultiByteCommand = 1;
+        firstMultiByte = incomingValue;
+        neededAcks = 2;
+    }
+    else if( isMultiByteCommand )
+    {
+        secondMultiByte = incomingValue;
+    }
+    
+    sendNow();
     
     endWait();                              // wait for start to go up
     initPins();                             // We're all done
@@ -480,17 +517,13 @@ void Listen_To_Sega()
 
 
 
-void sendNow(char resend)
+void sendNow()
 {
-    if( resend )
-    {
-        outgoing = lastByteSentToKeyboard;
-    }
-    else
-    {
-        outgoing = get_byte_to_send_to_keyboard();
-        lastByteSentToKeyboard = outgoing;  
-    }
+    
+    
+    outgoing = get_byte_to_send_to_keyboard();
+        
+
     
     
     // Spin here until PS2busy == 0;
@@ -595,10 +628,68 @@ void ps2interrupt( void )
         case 11: // Stop bit lots of spare time now
         
         
-                if( incoming == 0xFE)
+                if( incoming == 0xFA )
                 {
+                    neededAcks--;
+                    waitingForAck = 0;
+                    
+                    if( neededAcks == 0 )
+                    {
+                        isMultiByteCommand = 0;
+                    }
+                }
+        
+                else if( incoming == 0xFE )
+                {
+                    waitingForAck = 0;
+                    
+                    if( neededAcks == 2)
+                    {
+
+                        uint8_t index = sendHead + 1;
+
+                        if (index >= BUFFER_SIZE) index = 0;
+
+                        if (index != sendTail)
+                        {
+                            sendBuffer[index] = firstMultiByte;
+                            sendHead = index;
+                        }
+                        
+                    }
+                    else if( neededAcks == 1 )
+                    {
+
+                        uint8_t index = sendHead + 1;
+
+                        if (index >= BUFFER_SIZE) index = 0;
+
+                        if (index != sendTail)
+                        {
+                            sendBuffer[index] = firstMultiByte;
+                            sendHead = index;
+                        }
+
+
+
+                        index = sendHead + 1;
+
+                        if (index >= BUFFER_SIZE) index = 0;
+
+                        if (index != sendTail)
+                        {
+                            sendBuffer[index] = secondMultiByte;
+                            sendHead = index;
+                        }
+                        
+                        
+                        
+   
+                    }
+                    
                     resendByteToKeyboard = 1;
                 }
+
         
         
                 i = head + 1;
@@ -672,13 +763,9 @@ void send_bit()
                PS2busy = 0;
                outgoing = 0;
                WriteToPS2keyboard = 0;
-                
-              // if(sendHead != sendTail)
-              //     sendNow();
-      
-         
-     
-              
+               
+               waitingForAck = 1;
+                        
               
       default: // in case of weird error and end of byte reception re-sync
               bitcount = 0;
