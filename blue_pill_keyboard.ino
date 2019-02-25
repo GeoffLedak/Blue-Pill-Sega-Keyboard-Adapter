@@ -28,7 +28,9 @@ static volatile uint8_t sendBuffer[BUFFER_SIZE];
 static volatile uint8_t sendHead, sendTail;
 
 uint8_t lastByteSentToKeyboard = 0;
-char waitForAck = 0;
+volatile char waitingForAck = 0;
+
+uint8_t daTimer = 0;
 
 char PS2busy = 0;
 char WriteToPS2keyboard = 0;
@@ -43,6 +45,10 @@ volatile uint8_t _parity = 0;
 
 void setup()
 {
+    Serial.begin(9600);
+    delay(1000);
+    
+    
     // Setup AT keyboard communication
     
     // set KEYBOARD_DATA_PIN (PB11) to input floating
@@ -92,8 +98,39 @@ void loop()
     
     Talk_To_Sega();
     
-    if( ( sendHead != sendTai ) && !waitForAck )
+    if( ( sendHead != sendTail ) && !waitingForAck )
+    {
+        Serial.print("Ass ");
+        Serial.print(daTimer);
+        Serial.println(" ");
+        Serial.println(" ");
+        daTimer = 0;
         sendNow();
+    }
+    
+   if( ( sendHead != sendTail ) && waitingForAck )
+   {
+       Serial.println("P");
+       daTimer++;
+       
+       if( daTimer >= 10 )
+       {
+           if(sendTail == 0)
+           {
+               sendTail = (BUFFER_SIZE - 1);
+           }
+           else
+           {
+               sendTail--;
+           }
+           
+           daTimer = 0;
+           
+           Serial.println("T.O");
+           
+           sendNow();
+       }
+   }
 }
 
 
@@ -474,6 +511,7 @@ void sendNow()
     outgoing = get_byte_to_send_to_keyboard();
     lastByteSentToKeyboard = outgoing;
     
+    waitingForAck = 1;
     
     // Spin here until PS2busy == 0;
     // and keyboard clock pin is high
@@ -575,6 +613,27 @@ void ps2interrupt( void )
         case 10: // Parity check
                 break;
         case 11: // Stop bit lots of spare time now
+        
+
+                if( incoming == 0xFA || incoming == 0xFE )
+                {
+                    waitingForAck = 0;
+                    
+                    if( incoming == 0xFE )
+                    {
+                        if(sendTail == 0)
+                        {
+                            sendTail = (BUFFER_SIZE - 1);
+                        }
+                        else
+                        {
+                            sendTail--;
+                        }
+
+                        Serial.println("RS");
+                    }
+                }
+        
         
                 i = head + 1;
 
