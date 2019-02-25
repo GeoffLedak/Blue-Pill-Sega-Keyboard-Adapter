@@ -43,6 +43,8 @@ volatile uint8_t _parity = 0;
 
 void setup()
 {
+    Serial.begin(9600);
+    
     // Setup AT keyboard communication
     
     // set KEYBOARD_DATA_PIN (PB11) to input floating
@@ -82,6 +84,15 @@ void setup()
 
 void loop()
 {
+    if( resendByteToKeyboard )
+    {
+        Serial.println("G");
+        
+        resendByteToKeyboard = 0;
+        sendNow(1);
+        
+    }
+    
     // do nothing while we wait for TH to go high again (transaction complete)
     do{ }
     while( (GPIOA->regs->IDR & TH_BIT) != TH_BIT );
@@ -459,7 +470,7 @@ void Listen_To_Sega()
     }
     
     
-    sendNow();
+    sendNow(0);
     
     endWait();                              // wait for start to go up
     initPins();                             // We're all done
@@ -469,10 +480,17 @@ void Listen_To_Sega()
 
 
 
-void sendNow()
+void sendNow(char resend)
 {
-    outgoing = get_byte_to_send_to_keyboard();
-    lastByteSentToKeyboard = outgoing;
+    if( resend )
+    {
+        outgoing = lastByteSentToKeyboard;
+    }
+    else
+    {
+        outgoing = get_byte_to_send_to_keyboard();
+        lastByteSentToKeyboard = outgoing;  
+    }
     
     
     // Spin here until PS2busy == 0;
@@ -655,8 +673,8 @@ void send_bit()
                outgoing = 0;
                WriteToPS2keyboard = 0;
                 
-              if(sendHead != sendTail)
-                  sendNow();
+              // if(sendHead != sendTail)
+              //     sendNow();
       
          
      
