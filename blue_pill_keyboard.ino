@@ -507,6 +507,8 @@ void Listen_To_Sega()
         secondMultiByte = incomingValue;
     }
     
+    
+    
     sendNow();
     
     endWait();                              // wait for start to go up
@@ -643,6 +645,10 @@ void ps2interrupt( void )
                 {
                     waitingForAck = 0;
                     
+                    
+                    
+                    
+                    
                     if( neededAcks == 2)
                     {
 
@@ -659,6 +665,9 @@ void ps2interrupt( void )
                     }
                     else if( neededAcks == 1 )
                     {
+                        
+                        neededAcks = 2;
+                        
 
                         uint8_t index = sendHead + 1;
 
