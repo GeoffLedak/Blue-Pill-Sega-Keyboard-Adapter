@@ -27,6 +27,9 @@ static volatile uint8_t head, tail;
 static volatile uint8_t sendBuffer[BUFFER_SIZE];
 static volatile uint8_t sendHead, sendTail;
 
+char resendByteToKeyboard = 0;
+uint8_t lastByteSentToKeyboard = 0;
+
 char PS2busy = 0;
 char WriteToPS2keyboard = 0;
 
@@ -469,6 +472,7 @@ void Listen_To_Sega()
 void sendNow()
 {
     outgoing = get_byte_to_send_to_keyboard();
+    lastByteSentToKeyboard = outgoing;
     
     
     // Spin here until PS2busy == 0;
@@ -571,6 +575,13 @@ void ps2interrupt( void )
         case 10: // Parity check
                 break;
         case 11: // Stop bit lots of spare time now
+        
+        
+                if( incoming == 0xFE)
+                {
+                    resendByteToKeyboard = 1;
+                }
+        
         
                 i = head + 1;
 
