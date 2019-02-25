@@ -27,6 +27,9 @@ static volatile uint8_t head, tail;
 static volatile uint8_t sendBuffer[BUFFER_SIZE];
 static volatile uint8_t sendHead, sendTail;
 
+uint8_t lastByteSentToKeyboard = 0;
+char waitForAck = 0;
+
 char PS2busy = 0;
 char WriteToPS2keyboard = 0;
 
@@ -88,6 +91,9 @@ void loop()
     while( (GPIOA->regs->IDR & TH_BIT) != 0 );
     
     Talk_To_Sega();
+    
+    if( ( sendHead != sendTai ) && !waitForAck )
+        sendNow();
 }
 
 
@@ -455,9 +461,6 @@ void Listen_To_Sega()
         byteCount--;   
     }
     
-    
-    sendNow();
-    
     endWait();                              // wait for start to go up
     initPins();                             // We're all done
     return;
@@ -469,6 +472,7 @@ void Listen_To_Sega()
 void sendNow()
 {
     outgoing = get_byte_to_send_to_keyboard();
+    lastByteSentToKeyboard = outgoing;
     
     
     // Spin here until PS2busy == 0;
@@ -643,9 +647,6 @@ void send_bit()
                PS2busy = 0;
                outgoing = 0;
                WriteToPS2keyboard = 0;
-                
-              if(sendHead != sendTail)
-                  sendNow();
       
          
      
