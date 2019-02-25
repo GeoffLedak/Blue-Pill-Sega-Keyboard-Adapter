@@ -1,3 +1,8 @@
+#include "PS2KeyAdvanced.h"
+
+#define DATAPIN PB11
+#define IRQPIN  PB10
+
 /*
 bit0    PB12
 bit1    PB13
@@ -35,7 +40,7 @@ uint8_t incoming = 0;
 uint8_t outgoing = 0;
 uint32_t prev_ms = 0;
 
-volatile uint8_t _parity = 0;
+// volatile uint8_t _parity = 0;
 
 
 void setup()
@@ -53,7 +58,7 @@ void setup()
     sendHead = 0;
     sendTail = 0;
     
-    attachInterrupt(KEYBOARD_CLOCK_PIN, ps2interrupt, FALLING);
+    // attachInterrupt(KEYBOARD_CLOCK_PIN, ps2interrupt, FALLING);
     
     
     // Setup XBAND communication
@@ -483,7 +488,7 @@ void sendNow()
     WriteToPS2keyboard = 1;
     
     
-    _parity = 0;
+    // _parity = 0;
     bitcount = 0;
     
     
@@ -524,14 +529,14 @@ void sendNow()
 
 
 
-void ps2interrupt( void )
+void ps2interrupt_old( void )
 {
     if( ( GPIOB->regs->IDR & 0b0000010000000000 ) != 0 )
         return;
     
     
     if( WriteToPS2keyboard )
-        send_bit();
+        send_bit_old();
     else
     {
       uint32_t now_ms;
@@ -594,7 +599,7 @@ void ps2interrupt( void )
 }
 
 
-void send_bit()
+void send_bit_old()
 {
     uint8_t val;
 
@@ -622,12 +627,12 @@ void send_bit()
               // send bit. KEYBOARD_DATA_PIN = PB11
               GPIOB->regs->ODR = (GPIOB->regs->ODR & 0b1111011111111111) | (val << 11);
               
-              _parity += val;            // another one received ?
+              // _parity += val;            // another one received ?
               outgoing >>= 1;          // right _SHIFT one place for next bit
               break;
       case 10:
               // Parity - Send LSB if 1 = odd number of 1's so parity should be 0
-              GPIOB->regs->ODR = (GPIOB->regs->ODR & 0b1111011111111111) | (( ~_parity & 1 ) << 11);         
+              // GPIOB->regs->ODR = (GPIOB->regs->ODR & 0b1111011111111111) | (( ~_parity & 1 ) << 11);         
               
               break;
       case 11: // Stop bit write change to input for high stop bit
