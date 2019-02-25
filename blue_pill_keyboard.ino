@@ -20,25 +20,25 @@ TL      PA10    controlled by adapter
 
 // Scancode buffer
 #define BUFFER_SIZE 128
-static volatile uint8_t buffer[BUFFER_SIZE];
-static volatile uint8_t head, tail;
+volatile uint8_t buffer[BUFFER_SIZE];
+volatile uint8_t head, tail;
 
 // Control data (to send to keyboard, Reset, Caps LED, etc) buffer
-static volatile uint8_t sendBuffer[BUFFER_SIZE];
-static volatile uint8_t sendHead, sendTail;
+volatile uint8_t sendBuffer[BUFFER_SIZE];
+volatile uint8_t sendHead, sendTail;
 
-uint8_t lastByteSentToKeyboard = 0;
+volatile uint8_t lastByteSentToKeyboard = 0;
 volatile char waitingForAck = 0;
 
-uint8_t daTimer = 0;
+volatile uint8_t daTimer = 0;
 
-char PS2busy = 0;
-char WriteToPS2keyboard = 0;
+volatile char PS2busy = 0;
+volatile char WriteToPS2keyboard = 0;
 
-uint8_t bitcount = 0;
-uint8_t incoming = 0;
-uint8_t outgoing = 0;
-uint32_t prev_ms = 0;
+volatile uint8_t bitcount = 0;
+volatile uint8_t incoming = 0;
+volatile uint8_t outgoing = 0;
+volatile uint32_t prev_ms = 0;
 
 volatile uint8_t _parity = 0;
 
@@ -46,8 +46,6 @@ volatile uint8_t _parity = 0;
 void setup()
 {
     Serial.begin(9600);
-    delay(1000);
-    
     
     // Setup AT keyboard communication
     
@@ -100,20 +98,15 @@ void loop()
     
     if( ( sendHead != sendTail ) && !waitingForAck )
     {
-        Serial.print("Ass ");
-        Serial.print(daTimer);
-        Serial.println(" ");
-        Serial.println(" ");
         daTimer = 0;
         sendNow();
     }
     
    if( ( sendHead != sendTail ) && waitingForAck )
    {
-       Serial.println("P");
        daTimer++;
        
-       if( daTimer >= 10 )
+       if( daTimer >= 30 )
        {
            if(sendTail == 0)
            {
@@ -125,8 +118,6 @@ void loop()
            }
            
            daTimer = 0;
-           
-           Serial.println("T.O");
            
            sendNow();
        }
@@ -498,6 +489,10 @@ void Listen_To_Sega()
         byteCount--;   
     }
     
+    
+    Serial.println(incomingValue, HEX);
+    
+    
     endWait();                              // wait for start to go up
     initPins();                             // We're all done
     return;
@@ -511,7 +506,6 @@ void sendNow()
     outgoing = get_byte_to_send_to_keyboard();
     lastByteSentToKeyboard = outgoing;
     
-    waitingForAck = 1;
     
     // Spin here until PS2busy == 0;
     // and keyboard clock pin is high
@@ -520,9 +514,10 @@ void sendNow()
     while(PS2busy != 0 && (GPIOB->regs->IDR & KEYBOARD_CLOCK_PIN_BIT) != KEYBOARD_CLOCK_PIN_BIT );
     
    
-    
     PS2busy = 1;
     WriteToPS2keyboard = 1;
+    
+    waitingForAck = 1;
     
     
     _parity = 0;
@@ -598,6 +593,7 @@ void ps2interrupt( void )
       switch( bitcount )
       {
         case 1: // Start bit
+                _parity = 0;
                 PS2busy = 1;
                 break;
         case 2:
@@ -608,11 +604,24 @@ void ps2interrupt( void )
         case 7:
         case 8:
         case 9: // Data bits
+                _parity += val;          // another one received ?
                 incoming |= (val << (bitcount - 2) );
                 break;
         case 10: // Parity check
+        
+        
+                _parity &= 1;            // Get LSB if 1 = odd number of 1's so parity bit should be 0
+                
+                if( _parity == val )     // Both same parity error
+                    Serial.println("P.E");
+        
+        
+        
                 break;
         case 11: // Stop bit lots of spare time now
+        
+        
+                Serial.println(incoming, HEX);
         
 
                 if( incoming == 0xFA || incoming == 0xFE )
@@ -630,7 +639,6 @@ void ps2interrupt( void )
                             sendTail--;
                         }
 
-                        Serial.println("RS");
                     }
                 }
         
