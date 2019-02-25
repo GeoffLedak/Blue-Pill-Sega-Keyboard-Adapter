@@ -575,6 +575,9 @@ void ps2interrupt( void )
       uint8_t val, i;
 
 
+      // make sure we read in the middle of the low clock
+      delayMicroseconds(16);
+
       // Read value of KEYBOARD_DATA_PIN
       val = ( GPIOB->regs->IDR & 0b0000100000000000 ) >> 11;
       
@@ -613,7 +616,7 @@ void ps2interrupt( void )
                 _parity &= 1;            // Get LSB if 1 = odd number of 1's so parity bit should be 0
                 
                 if( _parity == val )     // Both same parity error
-                    Serial.println("P.E");
+                    Serial.println("P.E ====");
         
         
         
