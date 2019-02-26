@@ -571,9 +571,9 @@ void sendNow()
 
 
 
-void resendLastByte()
+void sendSpecificByte(uint8_t byteValue)
 {
-    outgoing = lastByteSentToKeyboard;
+    outgoing = byteValue;
 
     // Spin here until PS2busy == 0;
     // and keyboard clock pin is high
@@ -706,11 +706,13 @@ void ps2interrupt( void )
         
                 if( hasParityError && incoming != 0xFF )
                 {
-                    resendLastByte();
+                    sendSpecificByte(lastByteSentToKeyboard);
                 }
                 else if( incoming == 0xFF )
                 {
+                    Serial.println("ASS ****");
                     waitingForAck = 0;
+                    sendSpecificByte(0xF4);
                 }
                 else
                 {
