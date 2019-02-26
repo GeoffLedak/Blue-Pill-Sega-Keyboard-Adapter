@@ -42,6 +42,8 @@ volatile uint32_t prev_ms = 0;
 
 volatile uint8_t _parity = 0;
 
+volatile char hasParityError = 0;
+
 
 void setup()
 {
@@ -96,12 +98,17 @@ void loop()
     
     Talk_To_Sega();
     
+    
+
+    
     if( ( sendHead != sendTail ) && !waitingForAck )
     {
         daTimer = 0;
         sendNow();
     }
     
+    
+
    if( ( sendHead != sendTail ) && waitingForAck )
    {
        daTimer++;
@@ -122,6 +129,8 @@ void loop()
            sendNow();
        }
    }
+
+   
 }
 
 
@@ -561,6 +570,67 @@ void sendNow()
 
 
 
+
+void resendLastByte()
+{
+    outgoing = lastByteSentToKeyboard;
+
+    // Spin here until PS2busy == 0;
+    // and keyboard clock pin is high
+    // ADD A TIMEOUT FOR THIS
+    do { }
+    while(PS2busy != 0 && (GPIOB->regs->IDR & KEYBOARD_CLOCK_PIN_BIT) != KEYBOARD_CLOCK_PIN_BIT );
+    
+
+    PS2busy = 1;
+    WriteToPS2keyboard = 1;
+    
+    waitingForAck = 1;
+    
+    
+    _parity = 0;
+    bitcount = 0;
+    
+    
+    // set pins to outputs and high
+    
+    // set KEYBOARD_DATA_PIN (PB11) high
+    GPIOB->regs->ODR = (GPIOB->regs->ODR & 0b1111011111111111) | 0b0000100000000000;
+    
+    // set KEYBOARD_DATA_PIN (PB11) output open drain
+    GPIOB->regs->CRH = (GPIOB->regs->CRH & 0xFFFF0FFF) | 0x00005000;    // CNF = 01 MODE = 01
+    
+
+    // set KEYBOARD_CLOCK_PIN (PB10) high
+    GPIOB->regs->ODR = (GPIOB->regs->ODR & 0b1111101111111111) | 0b0000010000000000;
+    
+    // set KEYBOARD_CLOCK_PIN (PB10) output open drain
+    GPIOB->regs->CRH = (GPIOB->regs->CRH & 0xFFFFF0FF) | 0x00000500;    // CNF = 01 MODE = 01
+    
+    
+    
+    delayMicroseconds( 10 );
+    
+    
+    // set KEYBOARD_CLOCK_PIN (PB10) low
+    GPIOB->regs->ODR = (GPIOB->regs->ODR & 0b1111101111111111) | 0b0000000000000000;
+    
+    // set clock low for 60us
+    delayMicroseconds( 60 );
+    
+    
+    // set KEYBOARD_DATA_PIN (PB11) low
+    GPIOB->regs->ODR = (GPIOB->regs->ODR & 0b1111011111111111) | 0b0000000000000000;
+    
+
+    // set KEYBOARD_CLOCK_PIN (PB10) to input floating
+    GPIOB->regs->CRH = (GPIOB->regs->CRH & 0xFFFFF0FF) | 0x00000400;    // CNF = 01 MODE = 00  
+}
+
+
+
+
+
 void ps2interrupt( void )
 {
     if( ( GPIOB->regs->IDR & 0b0000010000000000 ) != 0 )
@@ -576,7 +646,7 @@ void ps2interrupt( void )
 
 
       // make sure we read in the middle of the low clock
-      delayMicroseconds(16);
+      delayMicroseconds(15);
 
       // Read value of KEYBOARD_DATA_PIN
       val = ( GPIOB->regs->IDR & 0b0000100000000000 ) >> 11;
@@ -616,7 +686,10 @@ void ps2interrupt( void )
                 _parity &= 1;            // Get LSB if 1 = odd number of 1's so parity bit should be 0
                 
                 if( _parity == val )     // Both same parity error
+                {
+                    hasParityError = 1;
                     Serial.println("P.E ====");
+                } 
         
         
         
@@ -624,37 +697,54 @@ void ps2interrupt( void )
         case 11: // Stop bit lots of spare time now
         
         
+                // IF HAS PARITY ERROR, DONT ADD IT TO THE BUFFER
+                // PULL CLOCK LOW
+        
+        
                 Serial.println(incoming, HEX);
         
-
-                if( incoming == 0xFA || incoming == 0xFE )
+        
+                if( hasParityError && incoming != 0xFF )
+                {
+                    resendLastByte();
+                }
+                else if( incoming == 0xFF )
                 {
                     waitingForAck = 0;
-                    
-                    if( incoming == 0xFE )
-                    {
-                        if(sendTail == 0)
-                        {
-                            sendTail = (BUFFER_SIZE - 1);
-                        }
-                        else
-                        {
-                            sendTail--;
-                        }
-
-                    }
                 }
-        
-        
-                i = head + 1;
-
-                if (i >= BUFFER_SIZE) i = 0;
-
-                if (i != tail)
+                else
                 {
-                    buffer[i] = incoming;
-                    head = i;
+                    if( incoming == 0xFA || incoming == 0xFE )
+                    {
+                        waitingForAck = 0;
+                        
+                        if( incoming == 0xFE )
+                        {
+                            if(sendTail == 0)
+                            {
+                                sendTail = (BUFFER_SIZE - 1);
+                            }
+                            else
+                            {
+                                sendTail--;
+                            }
+
+                        }
+                    }
+            
+            
+                    i = head + 1;
+
+                    if (i >= BUFFER_SIZE) i = 0;
+
+                    if (i != tail)
+                    {
+                        buffer[i] = incoming;
+                        head = i;
+                    }
+
                 }
+
 
                 bitcount = 0;
                 incoming = 0;
