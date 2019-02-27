@@ -27,7 +27,6 @@ volatile uint8_t head, tail;
 volatile uint8_t sendBuffer[BUFFER_SIZE];
 volatile uint8_t sendHead, sendTail;
 
-volatile uint8_t lastByteSentToKeyboard = 0;
 volatile char waitingForAck = 0;
 
 volatile uint8_t daTimer = 0;
@@ -43,6 +42,8 @@ volatile uint32_t prev_ms = 0;
 volatile uint8_t _parity = 0;
 
 volatile char hasParityError = 0;
+
+volatile char requestResendFromKeyboard = 0;
 
 
 void setup()
@@ -99,9 +100,15 @@ void loop()
     Talk_To_Sega();
     
     
+    
+    if( requestResendFromKeyboard )
+    {
+        requestResendFromKeyboard = 0;
+        sendResendRequest();
+    }
 
     
-    if( ( sendHead != sendTail ) && !waitingForAck )
+    else if( ( sendHead != sendTail ) && !waitingForAck )
     {
         daTimer = 0;
         sendNow();
@@ -109,7 +116,8 @@ void loop()
     
     
 
-   if( ( sendHead != sendTail ) && waitingForAck )
+
+   else if( ( sendHead != sendTail ) && waitingForAck )
    {
        daTimer++;
        
@@ -129,6 +137,7 @@ void loop()
            sendNow();
        }
    }
+
 
    
 }
@@ -514,7 +523,6 @@ void Listen_To_Sega()
 void sendNow()
 {
     outgoing = get_byte_to_send_to_keyboard();
-    lastByteSentToKeyboard = outgoing;
     
     
     // Spin here until PS2busy == 0;
@@ -568,6 +576,38 @@ void sendNow()
     // set KEYBOARD_CLOCK_PIN (PB10) to input floating
     GPIOB->regs->CRH = (GPIOB->regs->CRH & 0xFFFFF0FF) | 0x00000400;    // CNF = 01 MODE = 00  
 }
+
+
+
+void sendResendRequest()
+{
+    outgoing = get_byte_to_send_to_keyboard();
+
+    PS2busy = 1;
+    WriteToPS2keyboard = 1;
+
+    waitingForAck = 1;
+
+
+    _parity = 0;
+    bitcount = 0;
+
+
+
+    // set KEYBOARD_DATA_PIN (PB11) output open drain
+    GPIOB->regs->CRH = (GPIOB->regs->CRH & 0xFFFF0FFF) | 0x00005000;    // CNF = 01 MODE = 01
+
+
+    // set KEYBOARD_DATA_PIN (PB11) low
+    GPIOB->regs->ODR = (GPIOB->regs->ODR & 0b1111011111111111) | 0b0000000000000000;
+
+
+    // set KEYBOARD_CLOCK_PIN (PB10) to input floating
+    GPIOB->regs->CRH = (GPIOB->regs->CRH & 0xFFFFF0FF) | 0x00000400;    // CNF = 01 MODE = 00
+}
+
+
+
 
 
 
@@ -659,6 +699,7 @@ void ps2interrupt( void )
         bitcount = 0;
         incoming = 0;
         PS2busy = 0;
+        hasParityError = 0;
       }
       
       prev_ms = now_ms;
@@ -719,15 +760,67 @@ void ps2interrupt( void )
                 }
         
         
-                if( hasParityError )
+                if( incoming == 0xFF )
+                {
+                    // an error occurred, just trash it
+                    Serial.println("SHIET");
+                    
+                    // shit is fucked. Send reset command
+                    
+                    
+                    uint8_t index = sendHead + 1;
+
+                    if (index >= BUFFER_SIZE) index = 0;
+
+                    if (index != sendTail)
+                    {
+                        sendBuffer[index] = 0xF6;
+                        sendHead = index;
+                    }
+                    
+                    
+                    index = sendHead + 1;
+
+                    if (index >= BUFFER_SIZE) index = 0;
+
+                    if (index != sendTail)
+                    {
+                        sendBuffer[index] = 0xF4;
+                        sendHead = index;
+                    }
+                    
+                    
+                    
+                    waitingForAck = 0;
+                }
+        
+        
+                else if( hasParityError )
                 {
                     Serial.println("P error");
+                    
                     waitingForAck = 0;
                     
-                    if( incoming == 0xFF )
-                    {
-                       Serial.println("FF P error"); 
-                    }
+                    requestResendFromKeyboard = 1;
+                    
+
+                    // add 0xFE to beginning of send buffer
+                    
+                    sendBuffer[sendTail] = 0xFE;
+                    
+                    if( sendTail == 0)
+                        sendTail = BUFFER_SIZE - 1;
+                    else
+                        sendTail--;
+                    
+
+
+                    // set KEYBOARD_CLOCK_PIN (PB10) output open drain
+                    GPIOB->regs->CRH = (GPIOB->regs->CRH & 0xFFFFF0FF) | 0x00000500;    // CNF = 01 MODE = 01
+
+                    // set KEYBOARD_CLOCK_PIN (PB10) low
+                    GPIOB->regs->ODR = (GPIOB->regs->ODR & 0b1111101111111111) | 0b0000000000000000;
+
                 }
                 else
                 {
