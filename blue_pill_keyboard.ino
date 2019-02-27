@@ -499,6 +499,7 @@ void Listen_To_Sega()
     }
     
     
+    Serial.print("FROM SEGA ");
     Serial.println(incomingValue, HEX);
     
     
@@ -704,15 +705,29 @@ void ps2interrupt( void )
                 Serial.println(incoming, HEX);
         
         
-                if( hasParityError && incoming != 0xFF )
+                if( incoming == 0x00 )
                 {
-                    sendSpecificByte(lastByteSentToKeyboard);
+                   Serial.println("== ZERO! ==");
+                   waitingForAck = 0;                   
                 }
-                else if( incoming == 0xFF )
+                
+        
+                if( incoming == 0xFF && !hasParityError )
                 {
-                    Serial.println("ASS ****");
+                    Serial.println("0xFF error");
                     waitingForAck = 0;
-                    sendSpecificByte(0xF4);
+                }
+        
+        
+                if( hasParityError )
+                {
+                    Serial.println("P error");
+                    waitingForAck = 0;
+                    
+                    if( incoming == 0xFF )
+                    {
+                       Serial.println("FF P error"); 
+                    }
                 }
                 else
                 {
@@ -752,9 +767,11 @@ void ps2interrupt( void )
                 incoming = 0;
                 
                 PS2busy = 0;
+                hasParityError = 0;
         default:
                 bitcount = 0;
                 PS2busy = 0;
+                hasParityError = 0;
         }
     }
 }
