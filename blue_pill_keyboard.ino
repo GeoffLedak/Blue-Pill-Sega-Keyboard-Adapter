@@ -45,6 +45,9 @@ volatile char hasParityError = 0;
 
 volatile char requestResendFromKeyboard = 0;
 
+unsigned long keyboardFlags = 0;
+volatile char flagsIncoming = 0;
+
 
 void setup()
 {
@@ -123,18 +126,25 @@ void loop()
        
        if( daTimer >= 30 )
        {
-           if(sendTail == 0)
-           {
-               sendTail = (BUFFER_SIZE - 1);
-           }
-           else
-           {
-               sendTail--;
-           }
-           
-           daTimer = 0;
-           
-           sendNow();
+            requestResendFromKeyboard = 0;
+
+            sendHead = 0;
+            sendTail = 0;
+
+
+            uint8_t i = sendHead + 1;
+
+            if (i >= BUFFER_SIZE) i = 0;
+
+            if (i != sendTail)
+            {
+                sendBuffer[i] = 0xF4;
+                sendHead = i;
+            }
+
+            daTimer = 0;
+
+            sendNow();
        }
    }
 
@@ -499,6 +509,16 @@ void Listen_To_Sega()
 
         if (i != sendTail)
         {
+            if( flagsIncoming )
+            {
+                keyboardFlags = incomingValue;
+            }
+            
+            if( incomingValue == 0xED )
+                flagsIncoming = 1;
+            else
+                flagsIncoming = 0;
+            
             sendBuffer[i] = incomingValue;
             sendHead = i;
         }
@@ -762,10 +782,14 @@ void ps2interrupt( void )
         
                 if( incoming == 0xFF )
                 {
-                    // an error occurred, just trash it
                     Serial.println("SHIET");
                     
                     // shit is fucked. Send reset command
+                    
+                    requestResendFromKeyboard = 0;
+                    
+                    sendHead = 0;
+                    sendTail = 0;
                     
                     
                     uint8_t index = sendHead + 1;
@@ -774,7 +798,20 @@ void ps2interrupt( void )
 
                     if (index != sendTail)
                     {
-                        sendBuffer[index] = 0xF6;
+                        sendBuffer[index] = 0xF4;
+                        sendHead = index;
+                    }
+                    
+                    
+                    
+                    /*
+                    index = sendHead + 1;
+
+                    if (index >= BUFFER_SIZE) index = 0;
+
+                    if (index != sendTail)
+                    {
+                        sendBuffer[index] = 0xED;
                         sendHead = index;
                     }
                     
@@ -785,10 +822,10 @@ void ps2interrupt( void )
 
                     if (index != sendTail)
                     {
-                        sendBuffer[index] = 0xF4;
+                        sendBuffer[index] = keyboardFlags;
                         sendHead = index;
                     }
-                    
+                    */
                     
                     
                     waitingForAck = 0;
