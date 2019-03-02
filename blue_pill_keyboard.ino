@@ -49,6 +49,9 @@ unsigned long keyboardFlags = 0;
 volatile char LEDflagsIncoming = 0;
 
 
+volatile char waitingForResetAck = 0;
+
+
 void setup()
 {
     Serial.begin(9600);
@@ -143,6 +146,8 @@ void loop()
             }
 
             daTimer = 0;
+            
+            waitingForResetAck = 1;
 
             sendNow();
        }
@@ -503,48 +508,52 @@ void Listen_To_Sega()
         
         
         
-        
-        if( LEDflagsIncoming || incomingValue == 0xED )
+        if( incomingValue == 0xED )
         {
+            LEDflagsIncoming = 1;
+        }
+        else if( LEDflagsIncoming )
+        {
+            keyboardFlags = incomingValue;
+            LEDflagsIncoming = 0;
             
-            if( LEDflagsIncoming )
+            
+            // Hit LED register
+            uint8_t i = sendHead + 1;
+
+            if (i >= BUFFER_SIZE) i = 0;
+
+            if (i != sendTail)
             {
-                keyboardFlags = incomingValue;
+                sendBuffer[i] = 0xED;
+                sendHead = i;
             }
             
-            if( incomingValue == 0xED )
+            
+            // Set LEDs
+            i = sendHead + 1;
+
+            if (i >= BUFFER_SIZE) i = 0;
+
+            if (i != sendTail)
             {
-                LEDflagsIncoming = 1;
-            }
-            else
-            {
-                LEDflagsIncoming = 0;
+                sendBuffer[i] = keyboardFlags;
+                sendHead = i;
             }
             
         }
         else
         {
-            
-            
-        }
-        
-        
-        
-        
-        
-        // add incomingValue to buffer
-        uint8_t i = sendHead + 1;
+            // add incomingValue to buffer
+            uint8_t i = sendHead + 1;
 
-        if (i >= BUFFER_SIZE) i = 0;
+            if (i >= BUFFER_SIZE) i = 0;
 
-        if (i != sendTail)
-        {
-            
-            
-            
-            
-            sendBuffer[i] = incomingValue;
-            sendHead = i;
+            if (i != sendTail)
+            {
+                sendBuffer[i] = incomingValue;
+                sendHead = i;
+            }
         }
         
 
@@ -782,27 +791,13 @@ void ps2interrupt( void )
                 break;
         case 11: // Stop bit lots of spare time now
         
-        
-                // IF HAS PARITY ERROR, DONT ADD IT TO THE BUFFER
-                // PULL CLOCK LOW
-        
-        
                 Serial.println(incoming, HEX);
-        
-        
-                if( incoming == 0x00 )
-                {
-                   Serial.println("== ZERO! ==");
-                   waitingForAck = 0;                   
-                }
-                
         
                 if( incoming == 0xFF && !hasParityError )
                 {
                     Serial.println("0xFF error");
                     waitingForAck = 0;
                 }
-        
         
                 if( incoming == 0xFF )
                 {
@@ -826,31 +821,7 @@ void ps2interrupt( void )
                         sendHead = index;
                     }
                     
-                    
-                    
-                    /*
-                    index = sendHead + 1;
-
-                    if (index >= BUFFER_SIZE) index = 0;
-
-                    if (index != sendTail)
-                    {
-                        sendBuffer[index] = 0xED;
-                        sendHead = index;
-                    }
-                    
-                    
-                    index = sendHead + 1;
-
-                    if (index >= BUFFER_SIZE) index = 0;
-
-                    if (index != sendTail)
-                    {
-                        sendBuffer[index] = keyboardFlags;
-                        sendHead = index;
-                    }
-                    */
-                    
+                    waitingForResetAck = 1;
                     
                     waitingForAck = 0;
                 }
@@ -875,13 +846,11 @@ void ps2interrupt( void )
                         sendTail--;
                     
 
-
                     // set KEYBOARD_CLOCK_PIN (PB10) output open drain
                     GPIOB->regs->CRH = (GPIOB->regs->CRH & 0xFFFFF0FF) | 0x00000500;    // CNF = 01 MODE = 01
 
                     // set KEYBOARD_CLOCK_PIN (PB10) low
                     GPIOB->regs->ODR = (GPIOB->regs->ODR & 0b1111101111111111) | 0b0000000000000000;
-
                 }
                 else
                 {
@@ -899,11 +868,47 @@ void ps2interrupt( void )
                             {
                                 sendTail--;
                             }
-
                         }
+                        
+                        
+                        
+                        if( waitingForResetAck )
+                        {
+                            waitingForResetAck = 0;
+                            
+                            
+                            // Hit LED register
+                            uint8_t index = sendHead + 1;
+
+                            if (index >= BUFFER_SIZE) index = 0;
+
+                            if (index != sendTail)
+                            {
+                                sendBuffer[index] = 0xED;
+                                sendHead = index;
+                            }
+                            
+                            
+                            // Set LEDs
+                            index = sendHead + 1;
+
+                            if (index >= BUFFER_SIZE) index = 0;
+
+                            if (index != sendTail)
+                            {
+                                sendBuffer[index] = keyboardFlags;
+                                sendHead = index;
+                            }
+                            
+                        }
+                        
                     }
+                    
             
             
+            
+                    // if all is well, add it to the buffer
+                    
                     i = head + 1;
 
                     if (i >= BUFFER_SIZE) i = 0;
