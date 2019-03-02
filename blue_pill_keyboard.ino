@@ -46,7 +46,7 @@ volatile char hasParityError = 0;
 volatile char requestResendFromKeyboard = 0;
 
 unsigned long keyboardFlags = 0;
-volatile char flagsIncoming = 0;
+volatile char LEDflagsIncoming = 0;
 
 
 void setup()
@@ -502,6 +502,36 @@ void Listen_To_Sega()
         GPIOA->regs->ODR = (GPIOA->regs->ODR & 0b1111101111111111) | 0b0000000000000000;
         
         
+        
+        
+        if( LEDflagsIncoming || incomingValue == 0xED )
+        {
+            
+            if( LEDflagsIncoming )
+            {
+                keyboardFlags = incomingValue;
+            }
+            
+            if( incomingValue == 0xED )
+            {
+                LEDflagsIncoming = 1;
+            }
+            else
+            {
+                LEDflagsIncoming = 0;
+            }
+            
+        }
+        else
+        {
+            
+            
+        }
+        
+        
+        
+        
+        
         // add incomingValue to buffer
         uint8_t i = sendHead + 1;
 
@@ -509,15 +539,9 @@ void Listen_To_Sega()
 
         if (i != sendTail)
         {
-            if( flagsIncoming )
-            {
-                keyboardFlags = incomingValue;
-            }
             
-            if( incomingValue == 0xED )
-                flagsIncoming = 1;
-            else
-                flagsIncoming = 0;
+            
+            
             
             sendBuffer[i] = incomingValue;
             sendHead = i;
