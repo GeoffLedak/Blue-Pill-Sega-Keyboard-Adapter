@@ -48,7 +48,8 @@ volatile char requestResendFromKeyboard = 0;
 unsigned long LEDstatusByte = 0;
 volatile char LEDstatusIncoming = 0;
 
-unsigned long TypematicStatusByte = 0x0000002B;
+
+unsigned long TypematicStatusByte = 0x0000002B;     // defaults: 00101011 - 10.9 char/sec - 500ms
 volatile char TypematicStatusIncoming = 0;
 
 
@@ -511,6 +512,8 @@ void Listen_To_Sega()
         
         
         
+        // Keyboard LEDs
+        
         if( incomingValue == 0xED )
         {
             LEDstatusIncoming = 1;
@@ -548,8 +551,42 @@ void Listen_To_Sega()
         
         
         
-        // Typematic repeat stuff here
-        
+        // Typematic repeat
+
+        else if( incomingValue == 0xF3 )
+        {
+            TypematicStatusIncoming = 1;
+        }
+        else if( TypematicStatusIncoming )
+        {
+            TypematicStatusByte = incomingValue;
+            TypematicStatusIncoming = 0;
+            
+            
+            // Hit Typematic register
+            uint8_t i = sendHead + 1;
+
+            if (i >= BUFFER_SIZE) i = 0;
+
+            if (i != sendTail)
+            {
+                sendBuffer[i] = 0xF3;
+                sendHead = i;
+            }
+            
+            
+            // Set Typematic stuff
+            i = sendHead + 1;
+
+            if (i >= BUFFER_SIZE) i = 0;
+
+            if (i != sendTail)
+            {
+                sendBuffer[i] = TypematicStatusByte;
+                sendHead = i;
+            }
+            
+        }
         
         
         else
@@ -759,8 +796,6 @@ void ps2interrupt( void )
       
       if( now_ms - prev_ms > 250 )
       {
-        Serial.println("int timeout");
-          
         bitcount = 0;
         incoming = 0;
         PS2busy = 0;
@@ -1035,4 +1070,17 @@ static inline uint8_t get_byte_to_send_to_keyboard(void)
     c = sendBuffer[i];
     sendTail = i;
     return c;
+}
+
+
+
+
+
+void resetKeyboardAfterError()
+{
+    
+    
+    
+    
+    
 }
