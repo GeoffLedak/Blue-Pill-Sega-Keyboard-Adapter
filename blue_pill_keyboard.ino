@@ -45,8 +45,11 @@ volatile char hasParityError = 0;
 
 volatile char requestResendFromKeyboard = 0;
 
-unsigned long keyboardFlags = 0;
-volatile char LEDflagsIncoming = 0;
+unsigned long LEDstatusByte = 0;
+volatile char LEDstatusIncoming = 0;
+
+unsigned long TypematicStatusByte = 0x0000002B;
+volatile char TypematicStatusIncoming = 0;
 
 
 volatile char waitingForResetAck = 0;
@@ -510,12 +513,12 @@ void Listen_To_Sega()
         
         if( incomingValue == 0xED )
         {
-            LEDflagsIncoming = 1;
+            LEDstatusIncoming = 1;
         }
-        else if( LEDflagsIncoming )
+        else if( LEDstatusIncoming )
         {
-            keyboardFlags = incomingValue;
-            LEDflagsIncoming = 0;
+            LEDstatusByte = incomingValue;
+            LEDstatusIncoming = 0;
             
             
             // Hit LED register
@@ -537,11 +540,18 @@ void Listen_To_Sega()
 
             if (i != sendTail)
             {
-                sendBuffer[i] = keyboardFlags;
+                sendBuffer[i] = LEDstatusByte;
                 sendHead = i;
             }
             
         }
+        
+        
+        
+        // Typematic repeat stuff here
+        
+        
+        
         else
         {
             // add incomingValue to buffer
@@ -749,6 +759,8 @@ void ps2interrupt( void )
       
       if( now_ms - prev_ms > 250 )
       {
+        Serial.println("int timeout");
+          
         bitcount = 0;
         incoming = 0;
         PS2busy = 0;
@@ -896,7 +908,7 @@ void ps2interrupt( void )
 
                             if (index != sendTail)
                             {
-                                sendBuffer[index] = keyboardFlags;
+                                sendBuffer[index] = LEDstatusByte;
                                 sendHead = index;
                             }
                             
