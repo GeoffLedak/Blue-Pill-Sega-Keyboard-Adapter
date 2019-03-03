@@ -934,6 +934,7 @@ void processByteFromKeyboard()
 {
     Serial.println(incoming, HEX);
 
+    
     if( incoming == 0xFF )
     {
         Serial.println("SHIET");
@@ -946,8 +947,15 @@ void processByteFromKeyboard()
         waitingForAck = 0;
         resendTimeout = 0;
     }
+
+
+    else if( hasParityError )
+    {
+        handleParityErrorFromKeyboard();
+    }
     
-    if( incoming == 0xAA )
+    
+    else if( incoming == 0xAA )
     {
         // 0xAA is received if PS/2 keyboard
         // is disconnected then re-connected
@@ -959,32 +967,8 @@ void processByteFromKeyboard()
         waitingForAck = 0;
         resendTimeout = 0;
     }
-
-    else if( hasParityError )
-    {
-        Serial.println("P error");
-        
-        waitingForAck = 0;
-        
-        requestResendFromKeyboard = 1;
-        
-
-        // add 0xFE to beginning of send buffer
-        
-        sendBuffer[sendTail] = 0xFE;
-        
-        if( sendTail == 0)
-            sendTail = BUFFER_SIZE - 1;
-        else
-            sendTail--;
-        
-
-        // set KEYBOARD_CLOCK_PIN (PB10) output open drain
-        GPIOB->regs->CRH = (GPIOB->regs->CRH & 0xFFFFF0FF) | 0x00000500;    // CNF = 01 MODE = 01
-
-        // set KEYBOARD_CLOCK_PIN (PB10) low
-        GPIOB->regs->ODR = (GPIOB->regs->ODR & 0b1111101111111111) | 0b0000000000000000;
-    }
+    
+    
     else
     {
         if( incoming == 0xFA || incoming == 0xFE )
@@ -1096,4 +1080,33 @@ void processByteFromKeyboard()
     }
     
     
+}
+
+
+void handleParityErrorFromKeyboard()
+{
+    Serial.println("P error");
+
+    waitingForAck = 0;
+
+    requestResendFromKeyboard = 1;
+
+
+    // add 0xFE (request resend) to beginning of send buffer
+
+    sendBuffer[sendTail] = 0xFE;
+
+    if( sendTail == 0)
+        sendTail = BUFFER_SIZE - 1;
+    else
+        sendTail--;
+
+
+    // Send resend request immediately
+
+    // set KEYBOARD_CLOCK_PIN (PB10) output open drain
+    GPIOB->regs->CRH = (GPIOB->regs->CRH & 0xFFFFF0FF) | 0x00000500;    // CNF = 01 MODE = 01
+
+    // set KEYBOARD_CLOCK_PIN (PB10) low
+    GPIOB->regs->ODR = (GPIOB->regs->ODR & 0b1111101111111111) | 0b0000000000000000; 
 }
