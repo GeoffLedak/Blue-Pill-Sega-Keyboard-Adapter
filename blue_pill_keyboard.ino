@@ -29,7 +29,7 @@ volatile uint8_t sendHead, sendTail;
 
 volatile char waitingForAck = 0;
 
-volatile uint8_t daTimer = 0;
+volatile uint8_t ACKtimeout = 0;
 
 volatile char PS2busy = 0;
 volatile char WriteToPS2keyboard = 0;
@@ -120,7 +120,7 @@ void loop()
     
     else if( ( sendHead != sendTail ) && !waitingForAck )
     {
-        daTimer = 0;
+        ACKtimeout = 0;
         sendNow();
     }
     
@@ -129,28 +129,15 @@ void loop()
 
    else if( ( sendHead != sendTail ) && waitingForAck )
    {
-       daTimer++;
+       ACKtimeout++;
        
-       if( daTimer >= 30 )
+       if( ACKtimeout >= 30 )
        {
             requestResendFromKeyboard = 0;
 
-            sendHead = 0;
-            sendTail = 0;
+            resetKeyboardAfterError();
 
-
-            uint8_t i = sendHead + 1;
-
-            if (i >= BUFFER_SIZE) i = 0;
-
-            if (i != sendTail)
-            {
-                sendBuffer[i] = 0xF4;
-                sendHead = i;
-            }
-
-            daTimer = 0;
-            
+            ACKtimeout = 0;
             waitingForResetAck = 1;
 
             sendNow();
@@ -854,19 +841,13 @@ void ps2interrupt( void )
                     
                     requestResendFromKeyboard = 0;
                     
-                    sendHead = 0;
-                    sendTail = 0;
+                    
+                    resetKeyboardAfterError();
                     
                     
-                    uint8_t index = sendHead + 1;
-
-                    if (index >= BUFFER_SIZE) index = 0;
-
-                    if (index != sendTail)
-                    {
-                        sendBuffer[index] = 0xF4;
-                        sendHead = index;
-                    }
+                    
+                    
+                    
                     
                     waitingForResetAck = 1;
                     
@@ -1078,9 +1059,22 @@ static inline uint8_t get_byte_to_send_to_keyboard(void)
 
 void resetKeyboardAfterError()
 {
-    
-    
-    
-    
-    
+    sendHead = 0;
+    sendTail = 0;
+
+
+    uint8_t i = sendHead + 1;
+
+    if (i >= BUFFER_SIZE) i = 0;
+
+    if (i != sendTail)
+    {
+        sendBuffer[i] = 0xF4;
+        sendHead = i;
+    }
+
+
+    // add LED stuff
+    // add Typematic stuff
+  
 }
