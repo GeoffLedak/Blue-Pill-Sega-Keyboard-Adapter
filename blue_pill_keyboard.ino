@@ -48,13 +48,12 @@ volatile char requestResendFromKeyboard = 0;
 unsigned long LEDstatusByte = 0;
 volatile char LEDstatusIncoming = 0;
 
-
 unsigned long TypematicStatusByte = 0x0000002B;     // defaults: 00101011 - 10.9 char/sec - 500ms
 volatile char TypematicStatusIncoming = 0;
 
-
 volatile char waitingForResetAck = 0;
 
+volatile uint8_t resendTimeout = 0; 
 
 void setup()
 {
@@ -827,12 +826,6 @@ void ps2interrupt( void )
         
                 Serial.println(incoming, HEX);
         
-                if( incoming == 0xFF && !hasParityError )
-                {
-                    Serial.println("0xFF error");
-                    waitingForAck = 0;
-                }
-        
                 if( incoming == 0xFF )
                 {
                     Serial.println("SHIET");
@@ -841,19 +834,13 @@ void ps2interrupt( void )
                     
                     requestResendFromKeyboard = 0;
                     
-                    
                     resetKeyboardAfterError();
                     
-                    
-                    
-                    
-                    
-                    
                     waitingForResetAck = 1;
-                    
                     waitingForAck = 0;
+                    
+                    resendTimeout = 0;
                 }
-        
         
                 else if( hasParityError )
                 {
@@ -886,24 +873,47 @@ void ps2interrupt( void )
                     {
                         waitingForAck = 0;
                         
-                        if( incoming == 0xFE )
+                        
+                        if( incoming == 0xFA )
                         {
-                            if(sendTail == 0)
-                            {
-                                sendTail = (BUFFER_SIZE - 1);
-                            }
-                            else
-                            {
-                                sendTail--;
-                            }
+                            resendTimeout = 0;
                         }
                         
                         
+                        else if( incoming == 0xFE )
+                        {
+                            resendTimeout++;
+                            
+                            if( resendTimeout >= 10)
+                            {
+                                resendTimeout = 0;
+                                
+                                // reset the keyboard as if we received 0xFF
+                                requestResendFromKeyboard = 0;
+                    
+                                resetKeyboardAfterError();
+                                
+                                waitingForResetAck = 1;
+                                waitingForAck = 0;
+                                
+                                resendTimeout = 0;
+                            }
+                            else
+                            {
+                                if(sendTail == 0)
+                                {
+                                    sendTail = (BUFFER_SIZE - 1);
+                                }
+                                else
+                                {
+                                    sendTail--;
+                                }
+                            }
+                        }
                         
                         if( waitingForResetAck )
                         {
                             waitingForResetAck = 0;
-                            
                             
                             // Hit LED register
                             uint8_t index = sendHead + 1;
@@ -916,7 +926,6 @@ void ps2interrupt( void )
                                 sendHead = index;
                             }
                             
-                            
                             // Set LEDs
                             index = sendHead + 1;
 
@@ -928,13 +937,32 @@ void ps2interrupt( void )
                                 sendHead = index;
                             }
                             
+                            
+                            // Hit Typematic register
+                            index = sendHead + 1;
+
+                            if (index >= BUFFER_SIZE) index = 0;
+
+                            if (index != sendTail)
+                            {
+                                sendBuffer[index] = 0xF3;
+                                sendHead = index;
+                            }
+                            
+                            // Set Typematic stuff
+                            index = sendHead + 1;
+
+                            if (index >= BUFFER_SIZE) index = 0;
+
+                            if (index != sendTail)
+                            {
+                                sendBuffer[index] = TypematicStatusByte;
+                                sendHead = index;
+                            }
                         }
-                        
                     }
                     
-            
-            
-            
+
                     // if all is well, add it to the buffer
                     
                     i = head + 1;
@@ -946,9 +974,8 @@ void ps2interrupt( void )
                         buffer[i] = incoming;
                         head = i;
                     }
-
+                    
                 }
-
 
                 bitcount = 0;
                 incoming = 0;
@@ -1074,7 +1101,5 @@ void resetKeyboardAfterError()
     }
 
 
-    // add LED stuff
-    // add Typematic stuff
   
 }
