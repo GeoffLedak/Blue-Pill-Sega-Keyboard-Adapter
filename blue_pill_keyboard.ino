@@ -496,6 +496,11 @@ void Listen_To_Sega()
         
         
         
+        
+        
+        
+        
+        
         // Keyboard LEDs
         
         if( incomingValue == 0xED )
@@ -947,6 +952,20 @@ void processByteFromKeyboard()
         waitingForAck = 0;
         resendTimeout = 0;
     }
+    
+    
+    else if( incoming == 0x00 )
+    {
+        Serial.println("SHIET 00");
+        
+        // shit is fucked. Send reset command
+        
+        requestResendFromKeyboard = 0;
+        resetKeyboardAfterError();
+        waitingForResetAck = 1;
+        waitingForAck = 0;
+        resendTimeout = 0;
+    }
 
 
     else if( hasParityError )
@@ -969,103 +988,107 @@ void processByteFromKeyboard()
     }
     
     
-    else
+    
+    
+    else if( incoming == 0xFA || incoming == 0xFE )
     {
-        if( incoming == 0xFA || incoming == 0xFE )
+        waitingForAck = 0;
+        
+        
+        if( incoming == 0xFA )
         {
-            waitingForAck = 0;
+            resendTimeout = 0;
+        }
+        
+        
+        else if( incoming == 0xFE )
+        {
+            resendTimeout++;
             
-            
-            if( incoming == 0xFA )
+            if( resendTimeout >= 10)
             {
                 resendTimeout = 0;
-            }
-            
-            
-            else if( incoming == 0xFE )
-            {
-                resendTimeout++;
                 
-                if( resendTimeout >= 10)
+                // reset the keyboard as if we received 0xFF
+                requestResendFromKeyboard = 0;
+
+                resetKeyboardAfterError();
+                
+                waitingForResetAck = 1;
+                waitingForAck = 0;
+                
+                resendTimeout = 0;
+            }
+            else
+            {
+                // Back up buffer so we resend last byte
+                
+                if(sendTail == 0)
                 {
-                    resendTimeout = 0;
-                    
-                    // reset the keyboard as if we received 0xFF
-                    requestResendFromKeyboard = 0;
-        
-                    resetKeyboardAfterError();
-                    
-                    waitingForResetAck = 1;
-                    waitingForAck = 0;
-                    
-                    resendTimeout = 0;
+                    sendTail = (BUFFER_SIZE - 1);
                 }
                 else
                 {
-                    if(sendTail == 0)
-                    {
-                        sendTail = (BUFFER_SIZE - 1);
-                    }
-                    else
-                    {
-                        sendTail--;
-                    }
-                }
-            }
-            
-            if( waitingForResetAck )
-            {
-                waitingForResetAck = 0;
-                
-                // Hit LED register
-                uint8_t index = sendHead + 1;
-
-                if (index >= BUFFER_SIZE) index = 0;
-
-                if (index != sendTail)
-                {
-                    sendBuffer[index] = 0xED;
-                    sendHead = index;
-                }
-                
-                // Set LEDs
-                index = sendHead + 1;
-
-                if (index >= BUFFER_SIZE) index = 0;
-
-                if (index != sendTail)
-                {
-                    sendBuffer[index] = LEDstatusByte;
-                    sendHead = index;
-                }
-                
-                
-                // Hit Typematic register
-                index = sendHead + 1;
-
-                if (index >= BUFFER_SIZE) index = 0;
-
-                if (index != sendTail)
-                {
-                    sendBuffer[index] = 0xF3;
-                    sendHead = index;
-                }
-                
-                // Set Typematic stuff
-                index = sendHead + 1;
-
-                if (index >= BUFFER_SIZE) index = 0;
-
-                if (index != sendTail)
-                {
-                    sendBuffer[index] = TypematicStatusByte;
-                    sendHead = index;
+                    sendTail--;
                 }
             }
         }
         
+        if( waitingForResetAck )
+        {
+            waitingForResetAck = 0;
+            
+            // Hit LED register
+            uint8_t index = sendHead + 1;
 
-        // if all is well, add it to the buffer
+            if (index >= BUFFER_SIZE) index = 0;
+
+            if (index != sendTail)
+            {
+                sendBuffer[index] = 0xED;
+                sendHead = index;
+            }
+            
+            // Set LEDs
+            index = sendHead + 1;
+
+            if (index >= BUFFER_SIZE) index = 0;
+
+            if (index != sendTail)
+            {
+                sendBuffer[index] = LEDstatusByte;
+                sendHead = index;
+            }
+            
+            
+            // Hit Typematic register
+            index = sendHead + 1;
+
+            if (index >= BUFFER_SIZE) index = 0;
+
+            if (index != sendTail)
+            {
+                sendBuffer[index] = 0xF3;
+                sendHead = index;
+            }
+            
+            // Set Typematic stuff
+            index = sendHead + 1;
+
+            if (index >= BUFFER_SIZE) index = 0;
+
+            if (index != sendTail)
+            {
+                sendBuffer[index] = TypematicStatusByte;
+                sendHead = index;
+            }
+        }
+    }
+    
+    
+    else
+    {
+        // if it's 0xEE (or some other unknown byte) add it to the buffer
         
         uint8_t i = head + 1;
 
@@ -1076,11 +1099,21 @@ void processByteFromKeyboard()
             buffer[i] = incoming;
             head = i;
         }
-        
     }
+  
+}
+
+
+
+void processByteFromSega(uint8_t incomingValue)
+{
+    
+    
+    
     
     
 }
+
 
 
 void handleParityErrorFromKeyboard()
