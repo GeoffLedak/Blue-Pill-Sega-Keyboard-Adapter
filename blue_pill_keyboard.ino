@@ -57,7 +57,7 @@ volatile uint8_t resendTimeout = 0;
 
 void setup()
 {
-    Serial.begin(9600);
+    // Serial.begin(9600);
     
     // Setup AT keyboard communication
     
@@ -495,8 +495,8 @@ void Listen_To_Sega()
     }
     
     
-    Serial.print("FROM SEGA ");
-    Serial.println(incomingValue, HEX);
+    // Serial.print("FROM SEGA ");
+    // Serial.println(incomingValue, HEX);
     
     
     endWait();                              // wait for start to go up
@@ -693,7 +693,7 @@ void ps2interrupt()
                 if( _parity == val )     // Both same parity error
                 {
                     hasParityError = 1;
-                    Serial.println("P.E ====");
+                    // Serial.println("P.E ====");
                 } 
         
                 break;
@@ -812,11 +812,11 @@ void sendEnableScanCommand()
 
 void processByteFromKeyboard()
 {
-    Serial.println(incoming, HEX);
+    // Serial.println(incoming, HEX);
 
     if( incoming == 0xFF || incoming == 0x00 )
     {
-        Serial.println("SHIET");
+        // Serial.println("SHIET");
         // shit is fucked. Reset everything
         requestResendFromKeyboard = 0;
         clearSendBuffer();
@@ -967,7 +967,7 @@ void sendTypematicAndLEDs()
 
 void handleParityErrorFromKeyboard()
 {
-    Serial.println("P error");
+    // Serial.println("P error");
 
     waitingForAck = 0;
     requestResendFromKeyboard = 1;
