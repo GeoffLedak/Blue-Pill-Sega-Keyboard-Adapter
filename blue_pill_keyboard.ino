@@ -110,23 +110,18 @@ void loop()
     Talk_To_Sega();
     
     
-    
     if( requestResendFromKeyboard )
     {
         requestResendFromKeyboard = 0;
         sendResendRequest();
     }
 
-    
     else if( ( sendHead != sendTail ) && !waitingForAck )
     {
         ACKtimeout = 0;
         sendNow();
     }
     
-    
-
-
    else if( ( sendHead != sendTail ) && waitingForAck )
    {
        ACKtimeout++;
@@ -142,7 +137,7 @@ void loop()
             sendNow();
        }
    }
-
+   
 }
 
 
@@ -830,15 +825,7 @@ void clearSendBuffer()
 
 void sendEnableScanCommand()
 {
-    uint8_t i = sendHead + 1;
-
-    if (i >= BUFFER_SIZE) i = 0;
-
-    if (i != sendTail)
-    {
-        sendBuffer[i] = 0xF4;
-        sendHead = i;
-    }
+    addByteToSendBuffer(0xF4);  
 }
 
 
@@ -951,26 +938,10 @@ void processByteFromSega(uint8_t incomingValue)
         LEDstatusIncoming = 0;
         
         // Hit LED register
-        uint8_t i = sendHead + 1;
+        addByteToSendBuffer(0xED);
 
-        if (i >= BUFFER_SIZE) i = 0;
-
-        if (i != sendTail)
-        {
-            sendBuffer[i] = 0xED;
-            sendHead = i;
-        }
-        
         // Set LEDs
-        i = sendHead + 1;
-
-        if (i >= BUFFER_SIZE) i = 0;
-
-        if (i != sendTail)
-        {
-            sendBuffer[i] = LEDstatusByte;
-            sendHead = i;
-        }
+        addByteToSendBuffer(LEDstatusByte);
     }
 
 
@@ -986,27 +957,10 @@ void processByteFromSega(uint8_t incomingValue)
         TypematicStatusIncoming = 0;
         
         // Hit Typematic register
-        uint8_t i = sendHead + 1;
-
-        if (i >= BUFFER_SIZE) i = 0;
-
-        if (i != sendTail)
-        {
-            sendBuffer[i] = 0xF3;
-            sendHead = i;
-        }
-        
-        
+        addByteToSendBuffer(0xF3);
+         
         // Set Typematic stuff
-        i = sendHead + 1;
-
-        if (i >= BUFFER_SIZE) i = 0;
-
-        if (i != sendTail)
-        {
-            sendBuffer[i] = TypematicStatusByte;
-            sendHead = i;
-        }
+        addByteToSendBuffer(TypematicStatusByte);  
     }
 
 
@@ -1019,49 +973,17 @@ void processByteFromSega(uint8_t incomingValue)
 void sendTypematicAndLEDs()
 {
     // Hit LED register
-    uint8_t index = sendHead + 1;
-
-    if (index >= BUFFER_SIZE) index = 0;
-
-    if (index != sendTail)
-    {
-        sendBuffer[index] = 0xED;
-        sendHead = index;
-    }
+    addByteToSendBuffer(0xED);
 
     // Set LEDs
-    index = sendHead + 1;
-
-    if (index >= BUFFER_SIZE) index = 0;
-
-    if (index != sendTail)
-    {
-        sendBuffer[index] = LEDstatusByte;
-        sendHead = index;
-    }
+    addByteToSendBuffer(LEDstatusByte);
 
 
     // Hit Typematic register
-    index = sendHead + 1;
-
-    if (index >= BUFFER_SIZE) index = 0;
-
-    if (index != sendTail)
-    {
-        sendBuffer[index] = 0xF3;
-        sendHead = index;
-    }
-
+    addByteToSendBuffer(0xF3);
+         
     // Set Typematic stuff
-    index = sendHead + 1;
-
-    if (index >= BUFFER_SIZE) index = 0;
-
-    if (index != sendTail)
-    {
-        sendBuffer[index] = TypematicStatusByte;
-        sendHead = index;
-    } 
+    addByteToSendBuffer(TypematicStatusByte); 
 }
 
 
@@ -1098,7 +1020,13 @@ void handleParityErrorFromKeyboard()
 
 void addByteToSendBuffer(volatile uint8_t value)
 {
-    
-    
-    
+    uint8_t index = sendHead + 1;
+
+    if (index >= BUFFER_SIZE) index = 0;
+
+    if (index != sendTail)
+    {
+        sendBuffer[index] = value;
+        sendHead = index;
+    }  
 }
