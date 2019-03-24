@@ -134,9 +134,8 @@ void loop()
        if( ACKtimeout >= 30 )
        {
             requestResendFromKeyboard = 0;
-
-            resetKeyboardAfterError();
-
+            clearSendBuffer();
+            sendEnableScanCommand();
             ACKtimeout = 0;
             waitingForResetAck = 1;
 
@@ -917,12 +916,15 @@ static inline uint8_t get_byte_to_send_to_keyboard(void)
 }
 
 
-void resetKeyboardAfterError()
+void clearSendBuffer()
 {
     sendHead = 0;
     sendTail = 0;
+}
 
 
+void sendEnableScanCommand()
+{
     uint8_t i = sendHead + 1;
 
     if (i >= BUFFER_SIZE) i = 0;
@@ -939,67 +941,45 @@ void processByteFromKeyboard()
 {
     Serial.println(incoming, HEX);
 
-    
-    if( incoming == 0xFF )
+    if( incoming == 0xFF || incoming == 0x00 )
     {
         Serial.println("SHIET");
-        
         // shit is fucked. Send reset command
-        
         requestResendFromKeyboard = 0;
-        resetKeyboardAfterError();
+        clearSendBuffer();
+        sendEnableScanCommand();
         waitingForResetAck = 1;
         waitingForAck = 0;
         resendTimeout = 0;
     }
     
-    
-    else if( incoming == 0x00 )
-    {
-        Serial.println("SHIET 00");
-        
-        // shit is fucked. Send reset command
-        
-        requestResendFromKeyboard = 0;
-        resetKeyboardAfterError();
-        waitingForResetAck = 1;
-        waitingForAck = 0;
-        resendTimeout = 0;
-    }
-
-
     else if( hasParityError )
     {
         handleParityErrorFromKeyboard();
     }
     
-    
     else if( incoming == 0xAA )
     {
         // 0xAA is received if PS/2 keyboard
         // is disconnected then re-connected
-        // reset LEDs and Typematic repeat
+        // set LEDs and Typematic repeat
         
         requestResendFromKeyboard = 0;
-        resetKeyboardAfterError();
+        clearSendBuffer();
+        sendEnableScanCommand();
         waitingForResetAck = 1;
         waitingForAck = 0;
         resendTimeout = 0;
     }
-    
-    
-    
-    
+     
     else if( incoming == 0xFA || incoming == 0xFE )
     {
         waitingForAck = 0;
-        
         
         if( incoming == 0xFA )
         {
             resendTimeout = 0;
         }
-        
         
         else if( incoming == 0xFE )
         {
@@ -1011,77 +991,24 @@ void processByteFromKeyboard()
                 
                 // reset the keyboard as if we received 0xFF
                 requestResendFromKeyboard = 0;
-
-                resetKeyboardAfterError();
-                
+                clearSendBuffer();
+                sendEnableScanCommand();
                 waitingForResetAck = 1;
                 waitingForAck = 0;
-                
                 resendTimeout = 0;
             }
             else
             {
                 // Back up buffer so we resend last byte
-                
-                if(sendTail == 0)
-                {
-                    sendTail = (BUFFER_SIZE - 1);
-                }
-                else
-                {
-                    sendTail--;
-                }
+                if( sendTail == 0 ) sendTail = (BUFFER_SIZE - 1);
+                else sendTail--;
             }
         }
         
         if( waitingForResetAck )
         {
             waitingForResetAck = 0;
-            
-            // Hit LED register
-            uint8_t index = sendHead + 1;
-
-            if (index >= BUFFER_SIZE) index = 0;
-
-            if (index != sendTail)
-            {
-                sendBuffer[index] = 0xED;
-                sendHead = index;
-            }
-            
-            // Set LEDs
-            index = sendHead + 1;
-
-            if (index >= BUFFER_SIZE) index = 0;
-
-            if (index != sendTail)
-            {
-                sendBuffer[index] = LEDstatusByte;
-                sendHead = index;
-            }
-            
-            
-            // Hit Typematic register
-            index = sendHead + 1;
-
-            if (index >= BUFFER_SIZE) index = 0;
-
-            if (index != sendTail)
-            {
-                sendBuffer[index] = 0xF3;
-                sendHead = index;
-            }
-            
-            // Set Typematic stuff
-            index = sendHead + 1;
-
-            if (index >= BUFFER_SIZE) index = 0;
-
-            if (index != sendTail)
-            {
-                sendBuffer[index] = TypematicStatusByte;
-                sendHead = index;
-            }
+            sendTypematicAndLEDs(); 
         }
     }
     
@@ -1112,6 +1039,56 @@ void processByteFromSega(uint8_t incomingValue)
     
     
     
+}
+
+
+
+void sendTypematicAndLEDs()
+{
+    // Hit LED register
+    uint8_t index = sendHead + 1;
+
+    if (index >= BUFFER_SIZE) index = 0;
+
+    if (index != sendTail)
+    {
+        sendBuffer[index] = 0xED;
+        sendHead = index;
+    }
+
+    // Set LEDs
+    index = sendHead + 1;
+
+    if (index >= BUFFER_SIZE) index = 0;
+
+    if (index != sendTail)
+    {
+        sendBuffer[index] = LEDstatusByte;
+        sendHead = index;
+    }
+
+
+    // Hit Typematic register
+    index = sendHead + 1;
+
+    if (index >= BUFFER_SIZE) index = 0;
+
+    if (index != sendTail)
+    {
+        sendBuffer[index] = 0xF3;
+        sendHead = index;
+    }
+
+    // Set Typematic stuff
+    index = sendHead + 1;
+
+    if (index >= BUFFER_SIZE) index = 0;
+
+    if (index != sendTail)
+    {
+        sendBuffer[index] = TypematicStatusByte;
+        sendHead = index;
+    } 
 }
 
 
