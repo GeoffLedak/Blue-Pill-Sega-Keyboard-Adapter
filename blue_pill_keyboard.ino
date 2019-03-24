@@ -601,18 +601,15 @@ void sendSpecificByte(uint8_t byteValue)
 {
     outgoing = byteValue;
 
-    // Spin here until PS2busy == 0;
+    // Spin here until PS2busy == 0
     // and keyboard clock pin is high
-    // ADD A TIMEOUT FOR THIS
     do { }
     while(PS2busy != 0 && (GPIOB->regs->IDR & KEYBOARD_CLOCK_PIN_BIT) != KEYBOARD_CLOCK_PIN_BIT );
-    
 
     PS2busy = 1;
     WriteToPS2keyboard = 1;
     
     waitingForAck = 1;
-    
     
     _parity = 0;
     bitcount = 0;
@@ -634,7 +631,6 @@ void sendSpecificByte(uint8_t byteValue)
     GPIOB->regs->CRH = (GPIOB->regs->CRH & 0xFFFFF0FF) | 0x00000500;    // CNF = 01 MODE = 01
     
     
-    
     delayMicroseconds( 10 );
     
     
@@ -644,11 +640,10 @@ void sendSpecificByte(uint8_t byteValue)
     // set clock low for 60us
     delayMicroseconds( 60 );
     
-    
+
     // set KEYBOARD_DATA_PIN (PB11) low
     GPIOB->regs->ODR = (GPIOB->regs->ODR & 0b1111011111111111) | 0b0000000000000000;
     
-
     // set KEYBOARD_CLOCK_PIN (PB10) to input floating
     GPIOB->regs->CRH = (GPIOB->regs->CRH & 0xFFFFF0FF) | 0x00000400;    // CNF = 01 MODE = 00  
 }
@@ -907,7 +902,7 @@ void processByteFromKeyboard()
     
     else
     {
-        // if it's 0xEE (or some other unknown byte) add it to the buffer
+        // add byte from keyboard to buffer
         
         uint8_t i = head + 1;
 
