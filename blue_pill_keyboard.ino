@@ -200,7 +200,6 @@ void endWait()
 }
 
 
-
 void Talk_To_Sega()
 {
     // gen TH = select
@@ -506,25 +505,19 @@ void Listen_To_Sega()
 }
 
 
-
-
 void sendNow()
 {
     outgoing = get_byte_to_send_to_keyboard();
     
-    
-    // Spin here until PS2busy == 0;
+    // Spin here until PS2busy == 0
     // and keyboard clock pin is high
-    // ADD A TIMEOUT FOR THIS
     do { }
     while(PS2busy != 0 && (GPIOB->regs->IDR & KEYBOARD_CLOCK_PIN_BIT) != KEYBOARD_CLOCK_PIN_BIT );
     
-   
     PS2busy = 1;
     WriteToPS2keyboard = 1;
     
     waitingForAck = 1;
-    
     
     _parity = 0;
     bitcount = 0;
@@ -546,7 +539,6 @@ void sendNow()
     GPIOB->regs->CRH = (GPIOB->regs->CRH & 0xFFFFF0FF) | 0x00000500;    // CNF = 01 MODE = 01
     
     
-    
     delayMicroseconds( 10 );
     
     
@@ -566,7 +558,6 @@ void sendNow()
 }
 
 
-
 void sendResendRequest()
 {
     outgoing = get_byte_to_send_to_keyboard();
@@ -576,10 +567,8 @@ void sendResendRequest()
 
     waitingForAck = 1;
 
-
     _parity = 0;
     bitcount = 0;
-
 
 
     // set KEYBOARD_DATA_PIN (PB11) output open drain
@@ -593,8 +582,6 @@ void sendResendRequest()
     // set KEYBOARD_CLOCK_PIN (PB10) to input floating
     GPIOB->regs->CRH = (GPIOB->regs->CRH & 0xFFFFF0FF) | 0x00000400;    // CNF = 01 MODE = 00
 }
-
-
 
 
 void sendSpecificByte(uint8_t byteValue)
@@ -647,7 +634,6 @@ void sendSpecificByte(uint8_t byteValue)
     // set KEYBOARD_CLOCK_PIN (PB10) to input floating
     GPIOB->regs->CRH = (GPIOB->regs->CRH & 0xFFFFF0FF) | 0x00000400;    // CNF = 01 MODE = 00  
 }
-
 
 
 void ps2interrupt()
@@ -831,7 +817,7 @@ void processByteFromKeyboard()
     if( incoming == 0xFF || incoming == 0x00 )
     {
         Serial.println("SHIET");
-        // shit is fucked. Send reset command
+        // shit is fucked. Reset everything
         requestResendFromKeyboard = 0;
         clearSendBuffer();
         sendEnableScanCommand();
@@ -847,8 +833,7 @@ void processByteFromKeyboard()
     
     else if( incoming == 0xAA )
     {
-        // 0xAA is received if PS/2 keyboard
-        // is disconnected then re-connected
+        // 0xAA is received if PS/2 keyboard is disconnected from adapter then re-connected
         // set LEDs and Typematic repeat
         
         requestResendFromKeyboard = 0;
@@ -918,7 +903,6 @@ void processByteFromKeyboard()
 }
 
 
-
 void processByteFromSega(uint8_t incomingValue)
 {
     // Keyboard LEDs
@@ -964,7 +948,6 @@ void processByteFromSega(uint8_t incomingValue)
 }
 
 
-
 void sendTypematicAndLEDs()
 {
     // Hit LED register
@@ -980,7 +963,6 @@ void sendTypematicAndLEDs()
     // Set Typematic stuff
     addByteToSendBuffer(TypematicStatusByte); 
 }
-
 
 
 void handleParityErrorFromKeyboard()
@@ -1010,7 +992,6 @@ void handleParityErrorFromKeyboard()
     // set KEYBOARD_CLOCK_PIN (PB10) low
     GPIOB->regs->ODR = (GPIOB->regs->ODR & 0b1111101111111111) | 0b0000000000000000; 
 }
-
 
 
 void addByteToSendBuffer(volatile uint8_t value)
