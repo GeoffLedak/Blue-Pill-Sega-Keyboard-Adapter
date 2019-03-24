@@ -970,7 +970,6 @@ void handleParityErrorFromKeyboard()
     Serial.println("P error");
 
     waitingForAck = 0;
-
     requestResendFromKeyboard = 1;
 
 
