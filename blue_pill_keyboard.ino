@@ -494,103 +494,8 @@ void Listen_To_Sega()
         GPIOA->regs->ODR = (GPIOA->regs->ODR & 0b1111101111111111) | 0b0000000000000000;
         
         
-        
-        
-        
-        
-        
-        
-        // Keyboard LEDs
-        
-        if( incomingValue == 0xED )
-        {
-            LEDstatusIncoming = 1;
-        }
-        else if( LEDstatusIncoming )
-        {
-            LEDstatusByte = incomingValue;
-            LEDstatusIncoming = 0;
-            
-            
-            // Hit LED register
-            uint8_t i = sendHead + 1;
 
-            if (i >= BUFFER_SIZE) i = 0;
-
-            if (i != sendTail)
-            {
-                sendBuffer[i] = 0xED;
-                sendHead = i;
-            }
-            
-            
-            // Set LEDs
-            i = sendHead + 1;
-
-            if (i >= BUFFER_SIZE) i = 0;
-
-            if (i != sendTail)
-            {
-                sendBuffer[i] = LEDstatusByte;
-                sendHead = i;
-            }
-            
-        }
-        
-        
-        
-        // Typematic repeat
-
-        else if( incomingValue == 0xF3 )
-        {
-            TypematicStatusIncoming = 1;
-        }
-        else if( TypematicStatusIncoming )
-        {
-            TypematicStatusByte = incomingValue;
-            TypematicStatusIncoming = 0;
-            
-            
-            // Hit Typematic register
-            uint8_t i = sendHead + 1;
-
-            if (i >= BUFFER_SIZE) i = 0;
-
-            if (i != sendTail)
-            {
-                sendBuffer[i] = 0xF3;
-                sendHead = i;
-            }
-            
-            
-            // Set Typematic stuff
-            i = sendHead + 1;
-
-            if (i >= BUFFER_SIZE) i = 0;
-
-            if (i != sendTail)
-            {
-                sendBuffer[i] = TypematicStatusByte;
-                sendHead = i;
-            }
-            
-        }
-        
-        
-        else
-        {
-            // add incomingValue to buffer
-            uint8_t i = sendHead + 1;
-
-            if (i >= BUFFER_SIZE) i = 0;
-
-            if (i != sendTail)
-            {
-                sendBuffer[i] = incomingValue;
-                sendHead = i;
-            }
-        }
-        
+        processByteFromSega(incomingValue);
 
         byteCount--;   
     }
@@ -1034,11 +939,79 @@ void processByteFromKeyboard()
 
 void processByteFromSega(uint8_t incomingValue)
 {
+    // Keyboard LEDs
     
-    
-    
-    
-    
+    if( incomingValue == 0xED )
+    {
+        LEDstatusIncoming = 1;
+    }
+    else if( LEDstatusIncoming )
+    {
+        LEDstatusByte = incomingValue;
+        LEDstatusIncoming = 0;
+        
+        // Hit LED register
+        uint8_t i = sendHead + 1;
+
+        if (i >= BUFFER_SIZE) i = 0;
+
+        if (i != sendTail)
+        {
+            sendBuffer[i] = 0xED;
+            sendHead = i;
+        }
+        
+        // Set LEDs
+        i = sendHead + 1;
+
+        if (i >= BUFFER_SIZE) i = 0;
+
+        if (i != sendTail)
+        {
+            sendBuffer[i] = LEDstatusByte;
+            sendHead = i;
+        }
+    }
+
+
+    // Typematic repeat
+
+    else if( incomingValue == 0xF3 )
+    {
+        TypematicStatusIncoming = 1;
+    }
+    else if( TypematicStatusIncoming )
+    {
+        TypematicStatusByte = incomingValue;
+        TypematicStatusIncoming = 0;
+        
+        // Hit Typematic register
+        uint8_t i = sendHead + 1;
+
+        if (i >= BUFFER_SIZE) i = 0;
+
+        if (i != sendTail)
+        {
+            sendBuffer[i] = 0xF3;
+            sendHead = i;
+        }
+        
+        
+        // Set Typematic stuff
+        i = sendHead + 1;
+
+        if (i >= BUFFER_SIZE) i = 0;
+
+        if (i != sendTail)
+        {
+            sendBuffer[i] = TypematicStatusByte;
+            sendHead = i;
+        }
+    }
+
+
+    // otherwise it's not a valid byte
+    // so just throw it away
 }
 
 
@@ -1119,4 +1092,13 @@ void handleParityErrorFromKeyboard()
 
     // set KEYBOARD_CLOCK_PIN (PB10) low
     GPIOB->regs->ODR = (GPIOB->regs->ODR & 0b1111101111111111) | 0b0000000000000000; 
+}
+
+
+
+void addByteToSendBuffer(volatile uint8_t value)
+{
+    
+    
+    
 }
