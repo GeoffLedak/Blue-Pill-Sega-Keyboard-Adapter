@@ -1,4 +1,40 @@
 /*
+PS/2 to Sega XBAND keyboard adapter by Geoff Ledak
+For use on "Bill Pill" STM32 board
+https://github.com/GeoffLedak/Blue-Pill-Sega-Keyboard-Adapter
+
+Sega pinout:
+
+  1 2 3 4 5
+   6 7 8 9
+
+Pin 5 is +5V
+Pin 8 is Ground
+
+Sega Pin - Blue Pill pin
+-------------------------
+
+1        = PB12
+2        = PB13
+3        = PB14
+4        = PB15
+6 (TL)   = PA10
+7 (TH)   = PA8
+9 (TR)   = PA9
+
+5        = +5V
+8        = Ground
+
+1.5k Ohm pullup resistors are attached to all 7 pins (pins 1, 2, 3, 4, 6, 7, and 9)
+
+
+PS/2 Clock = PB10
+PS/2 Data  = PB11
+
+10k Ohm pullup resistors are attached to clock and data
+
+---------------------------
+
 bit0    PB12
 bit1    PB13
 bit2    PB14
