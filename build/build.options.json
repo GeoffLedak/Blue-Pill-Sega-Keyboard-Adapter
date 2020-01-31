@@ -1,0 +1,11 @@
+{
+  "additionalFiles": "",
+  "builtInLibrariesFolders": "C:\\Program Files (x86)\\Arduino\\libraries",
+  "customBuildProperties": "build.warn_data_percentage=75",
+  "fqbn": "Arduino_STM32:STM32F1:genericSTM32F103C:device_variant=STM32F103C8,upload_method=STLinkMethod,cpu_speed=speed_72mhz,opt=osstd",
+  "hardwareFolders": "C:\\Program Files (x86)\\Arduino\\hardware,C:\\Users\\Turbo9000\\AppData\\Local\\Arduino15\\packages,C:\\Users\\Turbo9000\\Documents\\Arduino\\hardware",
+  "otherLibrariesFolders": "C:\\Users\\Turbo9000\\Documents\\Arduino\\libraries",
+  "runtime.ide.version": "10808",
+  "sketchLocation": "C:\\Users\\Turbo9000\\Documents\\Arduino\\blue_pill_keyboard\\blue_pill_keyboard.ino",
+  "toolsFolders": "C:\\Program Files (x86)\\Arduino\\tools-builder,C:\\Program Files (x86)\\Arduino\\hardware\\tools\\avr,C:\\Users\\Turbo9000\\AppData\\Local\\Arduino15\\packages"
+}

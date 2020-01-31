@@ -1,0 +1,17 @@
+[
+  {
+    "Sourcefile": "",
+    "Include": "",
+    "Includepath": "C:\\Users\\Turbo9000\\Documents\\Arduino\\hardware\\Arduino_STM32\\STM32F1\\cores\\maple"
+  },
+  {
+    "Sourcefile": "",
+    "Include": "",
+    "Includepath": "C:\\Users\\Turbo9000\\Documents\\Arduino\\hardware\\Arduino_STM32\\STM32F1\\variants\\generic_stm32f103c"
+  },
+  {
+    "Sourcefile": "C:\\Users\\TURBO9~1\\AppData\\Local\\Temp\\arduino_build_805463\\sketch\\blue_pill_keyboard.ino.cpp",
+    "Include": "",
+    "Includepath": ""
+  }
+]

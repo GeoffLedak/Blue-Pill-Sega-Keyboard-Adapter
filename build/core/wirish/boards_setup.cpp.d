@@ -1,0 +1,32 @@
+C:\Users\TURBO9~1\AppData\Local\Temp\arduino_build_805463\core\wirish\boards_setup.cpp.o: \
+ C:\Users\Turbo9000\Documents\Arduino\hardware\Arduino_STM32\STM32F1\variants\generic_stm32f103c\wirish\boards_setup.cpp \
+ C:\Users\Turbo9000\Documents\Arduino\hardware\Arduino_STM32\STM32F1\cores\maple/boards_private.h \
+ C:\Users\Turbo9000\Documents\Arduino\hardware\Arduino_STM32\STM32F1\system/libmaple/include/libmaple/rcc.h \
+ C:\Users\Turbo9000\Documents\Arduino\hardware\Arduino_STM32\STM32F1\system/libmaple/include/libmaple/libmaple_types.h \
+ C:\Users\Turbo9000\Documents\Arduino\hardware\Arduino_STM32\STM32F1\system/libmaple/stm32f1/include/series/rcc.h \
+ C:\Users\Turbo9000\Documents\Arduino\hardware\Arduino_STM32\STM32F1\system/libmaple/include/libmaple/bitband.h \
+ C:\Users\Turbo9000\Documents\Arduino\hardware\Arduino_STM32\STM32F1\system/libmaple/include/libmaple/adc.h \
+ C:\Users\Turbo9000\Documents\Arduino\hardware\Arduino_STM32\STM32F1\system/libmaple/include/libmaple/libmaple.h \
+ C:\Users\Turbo9000\Documents\Arduino\hardware\Arduino_STM32\STM32F1\system/libmaple/include/libmaple/stm32.h \
+ C:\Users\Turbo9000\Documents\Arduino\hardware\Arduino_STM32\STM32F1\system/libmaple/stm32f1/include/series/stm32.h \
+ C:\Users\Turbo9000\Documents\Arduino\hardware\Arduino_STM32\STM32F1\system/libmaple/include/libmaple/util.h \
+ C:\Users\Turbo9000\Documents\Arduino\hardware\Arduino_STM32\STM32F1\system/libmaple/include/libmaple/delay.h \
+ C:\Users\Turbo9000\Documents\Arduino\hardware\Arduino_STM32\STM32F1\system/libmaple/include/libmaple/nvic.h \
+ C:\Users\Turbo9000\Documents\Arduino\hardware\Arduino_STM32\STM32F1\system/libmaple/stm32f1/include/series/nvic.h \
+ C:\Users\Turbo9000\Documents\Arduino\hardware\Arduino_STM32\STM32F1\system/libmaple/stm32f1/include/series/adc.h \
+ C:\Users\Turbo9000\Documents\Arduino\hardware\Arduino_STM32\STM32F1\system/libmaple/include/libmaple/gpio.h \
+ C:\Users\Turbo9000\Documents\Arduino\hardware\Arduino_STM32\STM32F1\system/libmaple/stm32f1/include/series/gpio.h \
+ C:\Users\Turbo9000\Documents\Arduino\hardware\Arduino_STM32\STM32F1\system/libmaple/include/libmaple/exti.h \
+ C:\Users\Turbo9000\Documents\Arduino\hardware\Arduino_STM32\STM32F1\system/libmaple/stm32f1/include/series/exti.h \
+ C:\Users\Turbo9000\Documents\Arduino\hardware\Arduino_STM32\STM32F1\system/libmaple/include/libmaple/timer.h \
+ C:\Users\Turbo9000\Documents\Arduino\hardware\Arduino_STM32\STM32F1\system/libmaple/stm32f1/include/series/timer.h \
+ C:\Users\Turbo9000\Documents\Arduino\hardware\Arduino_STM32\STM32F1\cores\maple/boards.h \
+ C:\Users\Turbo9000\Documents\Arduino\hardware\Arduino_STM32\STM32F1\cores\maple/wirish_types.h \
+ C:\Users\Turbo9000\Documents\Arduino\hardware\Arduino_STM32\STM32F1\variants\generic_stm32f103c/board/board.h \
+ C:\Users\Turbo9000\Documents\Arduino\hardware\Arduino_STM32\STM32F1\cores\maple/usb_serial.h \
+ C:\Users\Turbo9000\Documents\Arduino\hardware\Arduino_STM32\STM32F1\cores\maple/Print.h \
+ C:\Users\Turbo9000\Documents\Arduino\hardware\Arduino_STM32\STM32F1\cores\maple/WString.h \
+ C:\Users\Turbo9000\Documents\Arduino\hardware\Arduino_STM32\STM32F1\cores\maple/avr/pgmspace.h \
+ C:\Users\Turbo9000\Documents\Arduino\hardware\Arduino_STM32\STM32F1\cores\maple/Printable.h \
+ C:\Users\Turbo9000\Documents\Arduino\hardware\Arduino_STM32\STM32F1\cores\maple/boards.h \
+ C:\Users\Turbo9000\Documents\Arduino\hardware\Arduino_STM32\STM32F1\cores\maple/Stream.h
